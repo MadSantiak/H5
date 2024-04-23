@@ -67,7 +67,9 @@ void potAndButtonLoop() {
   if (currentState == LOW) {
     val = analogRead(potPin);
     volt = floatMap(val, 0, 4095, 0, 3.3);
-    
+    Serial.println("Getting value...");
+    delay(1000);
+  } else {
     Serial.print("Value: ");
     Serial.print(val);
     Serial.print(" Volt: ");
@@ -77,7 +79,7 @@ void potAndButtonLoop() {
     delay(100);
     digitalWrite(ledPin, LOW);
     delay(volt * 1000);
-  }  
+  }
 }
 
 // Function to translate digital value to analogue:
