@@ -11,7 +11,7 @@ int currentState = 0;
 #define yellowLED 12
 int val;
 float volt;
-bool pressed = false;
+bool turnOn = true;
 bool prevState = true;
 
 TaskHandle_t Task1;
@@ -118,13 +118,13 @@ void blinkYellow(void * parameter) {
 void interruptBtn(void * parameter) {
   for (;;) {
     xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
-    Serial.print("Interrupt button:");
+    Serial.print("Interrupt button: ");
     Serial.println(xPortGetCoreID());
     currentState = digitalRead(buttonPin);
     if (prevState != currentState)
     {
       prevState = currentState;
-      pressed = !pressed;
+      turnOn = !turnOn;
     }
     xSemaphoreGive(xBinarySemaphore);
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -146,15 +146,12 @@ void toggleLED(void * parameter){
       int green = constrain(map(val, 1365, 2730, 0, 255), 0, 255);
       int yellow = constrain(map(val, 2730, 4095, 0, 255), 0, 255);
      
-      if (pressed == 0) { 
-        analogWrite(ledPin, blue);
-        analogWrite(greenLED, green);  
-        analogWrite(yellowLED, yellow);
-      } else {
-        analogWrite(ledPin, 0);
-        analogWrite(greenLED, 0);  
-        analogWrite(yellowLED, 0);
-      }
+      if (turnOn == 0) {
+        blue = green = yellow = turnOn;
+      } 
+      analogWrite(ledPin, blue);
+      analogWrite(greenLED, green);  
+      analogWrite(yellowLED, yellow);
       xSemaphoreGive(xSemaphore);
       
       // Pause the task (use "val" for variable speed)
