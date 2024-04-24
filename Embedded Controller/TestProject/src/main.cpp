@@ -31,7 +31,6 @@ float floatMap(float x, float in_min, float in_max, float out_min, float out_max
 
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   pinMode(greenLED, OUTPUT);
@@ -50,7 +49,6 @@ void setup() {
   //   &Task1,
   //   0
   // );
-
   // xTaskCreatePinnedToCore(
   //   getPotentVal,
   //   "Get Value of Potentiometer",
@@ -102,11 +100,12 @@ void blinkYellow(void * parameter) {
     digitalWrite(greenLED, LOW);
   }
 }
+
 void toggleLED(void * parameter){
   for(;;) { 
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
-      // Serial.print("Toggling LED: ");
-      // Serial.println(xPortGetCoreID());
+      Serial.print("Toggling LED: ");
+      Serial.println(xPortGetCoreID());
       
       // Turn the LED on via analogue to allow for brightness control
       // constrain min and max values to ranges within 255, based on the recorded
@@ -122,7 +121,7 @@ void toggleLED(void * parameter){
       xSemaphoreGive(xSemaphore);
       
       // Pause the task (use "val" for variable speed)
-      vTaskDelay(50 / portTICK_PERIOD_MS);
+      vTaskDelay(20 / portTICK_PERIOD_MS);
 
       // Turn the LED off
       digitalWrite(ledPin, LOW);
@@ -141,13 +140,13 @@ void toggleLED(void * parameter){
 void getPotentVal(void * parameter) {
   for(;;) {
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
-      // Serial.print("Getting Potential value: ");
-      // Serial.println(xPortGetCoreID());
+      Serial.print("Getting Potential value: ");
+      Serial.println(xPortGetCoreID());
       val = analogRead(potPin);
       volt = floatMap(val, 0, 4095, 0, 3.3);
     
       xSemaphoreGive(xSemaphore);
-      vTaskDelay(250 / portTICK_PERIOD_MS);
+      vTaskDelay(20 / portTICK_PERIOD_MS);
     } else {
       Serial.println("Potent couldn't take..");
     }
@@ -168,7 +167,6 @@ void potentLoop() {
   digitalWrite(ledPin, LOW);
   delay(volt * 1000);
 }
-
 // Button loop:
 void buttonLoop() {
   currentState = digitalRead(buttonPin);
