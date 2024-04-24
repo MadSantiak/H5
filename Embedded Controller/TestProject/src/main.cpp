@@ -61,7 +61,7 @@ void setup() {
   //   1
   // );
   
-  // Establish functions on same core:
+  // Establish functions on unspecified cores:
   xTaskCreate(
     toggleLED,
     "Toggle LED",
@@ -104,30 +104,34 @@ void blinkYellow(void * parameter) {
 }
 void toggleLED(void * parameter){
   for(;;) { 
-    xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    Serial.print("Toggling LED: ");
-    Serial.println(xPortGetCoreID());
-    // Turn the LED on
-    if (volt > 0) {
-      digitalWrite(ledPin, HIGH);
-    } 
-    if (volt > 1.6) {
-      digitalWrite(greenLED, HIGH);
-    } 
-    if (volt > 2.3) {
-      digitalWrite(yellowLED, HIGH);
-    } 
+    if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
+      // Serial.print("Toggling LED: ");
+      // Serial.println(xPortGetCoreID());
+      
+      // Turn the LED on via analogue to allow for brightness control
+      // constrain min and max values to ranges within 255, based on the recorded
+      // digital signal (just for granularity's sake).
+      int blue = constrain(map(val, 0, 1365, 0, 255), 0, 255);
+      int green = constrain(map(val, 1365, 2730, 0, 255), 0, 255);
+      int yellow = constrain(map(val, 2730, 4095, 0, 255), 0, 255);
 
-    // Pause the task (use "val" for variable speed)
-    xSemaphoreGive(xSemaphore);
-    
-    vTaskDelay(250 / portTICK_PERIOD_MS);
+      analogWrite(ledPin, blue);
+      analogWrite(greenLED, green);  
+      analogWrite(yellowLED, yellow);
+  
+      xSemaphoreGive(xSemaphore);
+      
+      // Pause the task (use "val" for variable speed)
+      vTaskDelay(50 / portTICK_PERIOD_MS);
 
-    // Turn the LED off
-    digitalWrite(ledPin, LOW);
-    digitalWrite(greenLED, LOW);
-    digitalWrite(yellowLED, LOW);
-
+      // Turn the LED off
+      digitalWrite(ledPin, LOW);
+      digitalWrite(greenLED, LOW);
+      digitalWrite(yellowLED, LOW);
+    }
+    else {
+      Serial.println("LED couldn't take..");
+    }
     // // Pause the task again
     // vTaskDelay(250 / portTICK_PERIOD_MS);
     
@@ -136,13 +140,17 @@ void toggleLED(void * parameter){
 
 void getPotentVal(void * parameter) {
   for(;;) {
-    xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    Serial.print("Getting Potential value: ");
-    Serial.println(xPortGetCoreID());
-    val = analogRead(potPin);
-    volt = floatMap(val, 0, 4095, 0, 3.3);
-    xSemaphoreGive(xSemaphore);
-    vTaskDelay(250 / portTICK_PERIOD_MS);
+    if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
+      // Serial.print("Getting Potential value: ");
+      // Serial.println(xPortGetCoreID());
+      val = analogRead(potPin);
+      volt = floatMap(val, 0, 4095, 0, 3.3);
+    
+      xSemaphoreGive(xSemaphore);
+      vTaskDelay(250 / portTICK_PERIOD_MS);
+    } else {
+      Serial.println("Potent couldn't take..");
+    }
   }
 }
 
