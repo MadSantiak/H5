@@ -11,16 +11,20 @@ int currentState = 0;
 #define yellowLED 12
 int val;
 float volt;
+bool pressed = false;
+bool prevState = true;
 
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
+SemaphoreHandle_t xBinarySemaphore = xSemaphoreCreateBinary();
 
 // Prototype functions:
 void potentLoop();
 void buttonLoop();
 void potAndButtonLoop();
+void interruptBtn(void * parameter);
 void toggleLED(void * parameter);
 void getPotentVal(void * parameter);
 void blinkGreen(void * parameter);
@@ -74,6 +78,16 @@ void setup() {
     NULL,
     1,
     NULL);
+  xTaskCreate(
+    interruptBtn,
+    "Interrupt Button",
+    1000,
+    NULL,
+    1,
+    NULL);
+
+  // Increment Binary Semaphore with one:
+  xSemaphoreGive(xBinarySemaphore);
 }
 
 void loop() {
@@ -101,8 +115,26 @@ void blinkYellow(void * parameter) {
   }
 }
 
+void interruptBtn(void * parameter) {
+  for (;;) {
+    xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
+    Serial.print("Interrupt button:");
+    Serial.println(xPortGetCoreID());
+    currentState = digitalRead(buttonPin);
+    if (prevState != currentState)
+    {
+      prevState = currentState;
+      pressed = !pressed;
+    }
+    xSemaphoreGive(xBinarySemaphore);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+
+}
+
 void toggleLED(void * parameter){
   for(;;) { 
+    xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
       Serial.print("Toggling LED: ");
       Serial.println(xPortGetCoreID());
@@ -113,32 +145,34 @@ void toggleLED(void * parameter){
       int blue = constrain(map(val, 0, 1365, 0, 255), 0, 255);
       int green = constrain(map(val, 1365, 2730, 0, 255), 0, 255);
       int yellow = constrain(map(val, 2730, 4095, 0, 255), 0, 255);
-
-      analogWrite(ledPin, blue);
-      analogWrite(greenLED, green);  
-      analogWrite(yellowLED, yellow);
-  
+     
+      if (pressed == 0) { 
+        analogWrite(ledPin, blue);
+        analogWrite(greenLED, green);  
+        analogWrite(yellowLED, yellow);
+      } else {
+        analogWrite(ledPin, 0);
+        analogWrite(greenLED, 0);  
+        analogWrite(yellowLED, 0);
+      }
       xSemaphoreGive(xSemaphore);
       
       // Pause the task (use "val" for variable speed)
       vTaskDelay(20 / portTICK_PERIOD_MS);
-
-      // Turn the LED off
-      digitalWrite(ledPin, LOW);
-      digitalWrite(greenLED, LOW);
-      digitalWrite(yellowLED, LOW);
     }
     else {
       Serial.println("LED couldn't take..");
     }
     // // Pause the task again
     // vTaskDelay(250 / portTICK_PERIOD_MS);
-    
+    xSemaphoreGive(xBinarySemaphore);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
   }
 }
 
 void getPotentVal(void * parameter) {
   for(;;) {
+    xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
     if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
       Serial.print("Getting Potential value: ");
       Serial.println(xPortGetCoreID());
@@ -150,6 +184,8 @@ void getPotentVal(void * parameter) {
     } else {
       Serial.println("Potent couldn't take..");
     }
+    xSemaphoreGive(xBinarySemaphore);
+    vTaskDelay(20 / portTICK_PERIOD_MS);
   }
 }
 
