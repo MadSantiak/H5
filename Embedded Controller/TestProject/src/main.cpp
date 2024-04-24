@@ -15,6 +15,8 @@ float volt;
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
+SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
+
 // Prototype functions:
 void potentLoop();
 void buttonLoop();
@@ -37,26 +39,43 @@ void setup() {
 
   // Button setup:
   pinMode(buttonPin, INPUT_PULLUP);
-  xTaskCreatePinnedToCore(
+  
+  // Establish functions on separate cores:
+  // xTaskCreatePinnedToCore(
+  //   toggleLED,
+  //   "Toggle LED",
+  //   1000,
+  //   NULL,
+  //   1,
+  //   &Task1,
+  //   0
+  // );
+
+  // xTaskCreatePinnedToCore(
+  //   getPotentVal,
+  //   "Get Value of Potentiometer",
+  //   1000,
+  //   NULL,
+  //   1,
+  //   &Task2,
+  //   1
+  // );
+  
+  // Establish functions on same core:
+  xTaskCreate(
     toggleLED,
     "Toggle LED",
     1000,
     NULL,
     1,
-    &Task1,
-    0
-  );
-
-  xTaskCreatePinnedToCore(
+    NULL);
+  xTaskCreate(
     getPotentVal,
-    "Get Value of Potentiometer",
+    "Get Potent Val",
     1000,
     NULL,
     1,
-    &Task2,
-    1
-  );
-  
+    NULL);
 }
 
 void loop() {
@@ -85,6 +104,7 @@ void blinkYellow(void * parameter) {
 }
 void toggleLED(void * parameter){
   for(;;) { 
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
     Serial.print("Toggling LED: ");
     Serial.println(xPortGetCoreID());
     // Turn the LED on
@@ -99,6 +119,8 @@ void toggleLED(void * parameter){
     } 
 
     // Pause the task (use "val" for variable speed)
+    xSemaphoreGive(xSemaphore);
+    
     vTaskDelay(250 / portTICK_PERIOD_MS);
 
     // Turn the LED off
@@ -106,17 +128,20 @@ void toggleLED(void * parameter){
     digitalWrite(greenLED, LOW);
     digitalWrite(yellowLED, LOW);
 
-    // Pause the task again
-    vTaskDelay(250 / portTICK_PERIOD_MS);
+    // // Pause the task again
+    // vTaskDelay(250 / portTICK_PERIOD_MS);
+    
   }
 }
 
 void getPotentVal(void * parameter) {
   for(;;) {
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
     Serial.print("Getting Potential value: ");
     Serial.println(xPortGetCoreID());
     val = analogRead(potPin);
     volt = floatMap(val, 0, 4095, 0, 3.3);
+    xSemaphoreGive(xSemaphore);
     vTaskDelay(250 / portTICK_PERIOD_MS);
   }
 }
