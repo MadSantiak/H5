@@ -1,16 +1,18 @@
 #include <Arduino.h>
+//! Potentiometer 1, controls frequency (heart rate)
 #define freqPin 4
+//! Potentiometer 2, controls amplitude (systolic/diastolic pressure)
 #define ampliPin 14
 #define ledPin 2
 #define greenLED 13
-#define yellowLED 12
+// #define yellowLED 12 (Unused currently)
 #define buttonPin 15
 
 hw_timer_t *My_timer = NULL;
 
 const int maxArrays = 3;
 int selectedArray = 0;
-// Normal, Tachycardia, Fibrilation:
+//! Contains 3 rhytms: Normal, Tachycardia, Fibrilation:
 int arrBeats[maxArrays][40] = {
   {66, 66, 66, 66, 66, 72, 78, 82, 78, 72, 70, 66, 66, 66, 66, 66, 90, 132, 180, 255, 160, 132, 72, 0, 31, 66, 66, 66, 66, 66, 70, 82, 90, 86, 72, 66, 66, 66, 66, 66},
   {66, 66, 66, 90, 180, 255, 60, 66, 78, 60, 66, 66, 66, 90, 180, 255, 60, 66, 78, 60, 66, 66, 66, 90, 180, 255, 60, 66, 78, 60, 66, 66, 66, 90, 180, 255, 60, 66, 78, 60},
@@ -26,7 +28,7 @@ int freq;
 int amp;
 bool flatline = false;
 
-// Bool used for debounce of button press.
+//! Bool used for debounce of button press.
 volatile bool state = LOW;
 
 // Prototyping of functions:
@@ -36,6 +38,7 @@ void switchBeat();
 void flatlineCheck();
 float floatMap(float x, float in_min, float in_max, float out_min, float out_max);
 
+//! Set up relevant pins, timer interrupt, and event interrupt.
 void setup() {
   Serial.begin(115200);
 
@@ -50,8 +53,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(buttonPin), switchBeat, FALLING);
 }
 
+//! Reattach interrupt event if it occured (to prevent debounce), call heartBeat() continuously.
 void loop() {
-  // Reattach interrupt event if it occured (to prevent debounce)
   if (state) {
     if (digitalRead(buttonPin)) {
       attachInterrupt(digitalPinToInterrupt(buttonPin), switchBeat, FALLING);
@@ -61,7 +64,7 @@ void loop() {
   heartBeat();
 }
 
-// Timer interrupt that reads input (potentiometers) and translates these to useful values
+//! Timer interrupt that reads input (potentiometers) and translates these to useful values
 void IRAM_ATTR onTimer(){
   digitalWrite(greenLED, !digitalRead(greenLED));
   freq = analogRead(freqPin);
@@ -71,28 +74,28 @@ void IRAM_ATTR onTimer(){
   if (signalStr <= 0.1) signalStr = 0.1;
 }
 
-// Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC).
+//! Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC).
 void heartBeat() {
-  // Get the number of entries in the array:  
+  //! Get the number of entries in the array:  
   int beats = sizeof(arrBeats[selectedArray])/sizeof(int);
   float interval = bpm/beats;
-  // Iterate across the array, printing the beat value for each.
+  //! Iterate across the array, printing the beat value for each.
   for (byte i = 0; i < beats; i++) 
   {       
-          // Normalize heartbeat
+          //! Normalize heartbeat
           float actualStr = signalStr * corrigatedStr;
           float baselineStr = baseline * actualStr;
           float beatStr = arrBeats[selectedArray][i] * actualStr;
           float normalizedBeatStr = beatStr - baselineStr;
 
-          // Make the range static:
+          //! Make the range static:
           Serial.print("Min:");
           Serial.print(-100);
           Serial.print(",");
           Serial.print("Max:");
           Serial.print(200);
 
-          // Plot the heart beat
+          //! Plot the heart beat
           Serial.print(",");
           Serial.print("BPM:");          
           Serial.println(normalizedBeatStr);
@@ -101,12 +104,12 @@ void heartBeat() {
   flatlineCheck();
 }
 
+//! If the "patient" is flatlining, the signal strenght (amplitude of the heartbeat) is gradually diminshed.
 void flatlineCheck() {
-  // If the "patient" is flatlining, the signal strenght (amplitude of the heartbeat) is gradually diminshed.
   if (flatline) {
     corrigatedStr = corrigatedStr * 0.75;
   }
-  // Else, it is gradually increased until normal: 
+  //! Else, it is gradually increased until normal: 
   else {
     if (corrigatedStr < signalStr) {
     corrigatedStr = corrigatedStr * 1.25;
@@ -116,13 +119,13 @@ void flatlineCheck() {
   }
 }
 
-// Helper function for translating digital value (x) to a value within a given range (out_min, out_max).
-// Where in_min is the minimum value, and in_max the maximum, e.g. 12 bit => 0 - 4095.
+//! Helper function for translating digital value (x) to a value within a given range (out_min, out_max).
+//! Where in_min is the minimum value, and in_max the maximum, e.g. 12 bit => 0 - 4095.
 float floatMap(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Function called on button press, changing the selected heartbeat
+//! Function called on button press, changing the selected heartbeat
 void switchBeat() {
   if (!state) {
     if (selectedArray < maxArrays-1)
@@ -134,7 +137,7 @@ void switchBeat() {
       flatline = false;
       corrigatedStr = 0.5;
     }
-    // Avoid debounce by detaching interrupt after initial press, reattach in loop():
+    //! Avoid debounce by detaching interrupt after initial press, reattach in loop():
     state = true;
     detachInterrupt(digitalPinToInterrupt(buttonPin));
   }

@@ -1,0 +1,271 @@
+\doxysection{src/main.cpp File Reference}
+\hypertarget{main_8cpp}{}\label{main_8cpp}\index{src/main.cpp@{src/main.cpp}}
+{\ttfamily \#include $<$Arduino.\+h$>$}\newline
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{main_8cpp_a2764d6beffc5654bd55f73c49843d1a7}{freq\+Pin}}~4
+\begin{DoxyCompactList}\small\item\em Potentiometer 1, controls frequency (heart rate) \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{main_8cpp_a6312fb8e7e002c9bda6d5023f4153320}{ampli\+Pin}}~14
+\begin{DoxyCompactList}\small\item\em Potentiometer 2, controls amplitude (systolic/diastolic pressure) \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{main_8cpp_a49ba715e713d99d1a5c20429dacaf073}{led\+Pin}}~2
+\item 
+\#define \mbox{\hyperlink{main_8cpp_a1a56ea4d69b5651122b6fb8a879ec8c4}{green\+LED}}~13
+\item 
+\#define \mbox{\hyperlink{main_8cpp_a352fec4313db424629486e83da01de55}{button\+Pin}}~15
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void IRAM\+\_\+\+ATTR \mbox{\hyperlink{main_8cpp_ada06ab1c4bbd307a9fea75726c8894f1}{on\+Timer}} ()
+\begin{DoxyCompactList}\small\item\em Timer interrupt that reads input (potentiometers) and translates these to useful values. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{main_8cpp_abef6dd5b809e8a2ad491477bede9eb49}{heart\+Beat}} ()
+\begin{DoxyCompactList}\small\item\em Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{main_8cpp_a2e6678c8d43cfdbf3351320ae20f0315}{switch\+Beat}} ()
+\begin{DoxyCompactList}\small\item\em Function called on button press, changing the selected heartbeat. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{main_8cpp_ab95b031271b290306e5692f332a388ae}{flatline\+Check}} ()
+\begin{DoxyCompactList}\small\item\em If the "{}patient"{} is flatlining, the signal strenght (amplitude of the heartbeat) is gradually diminshed. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{main_8cpp_a284efb0a3d19dcac39428af341fcb4cf}{float\+Map}} (float x, float in\+\_\+min, float in\+\_\+max, float out\+\_\+min, float out\+\_\+max)
+\item 
+void \mbox{\hyperlink{main_8cpp_a4fc01d736fe50cf5b977f755b675f11d}{setup}} ()
+\begin{DoxyCompactList}\small\item\em Set up relevant pins, timer interrupt, and event interrupt. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{main_8cpp_afe461d27b9c48d5921c00d521181f12f}{loop}} ()
+\begin{DoxyCompactList}\small\item\em Reattach interrupt event if it occured (to prevent debounce), call \doxylink{main_8cpp_abef6dd5b809e8a2ad491477bede9eb49}{heart\+Beat()} continuously. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+hw\+\_\+timer\+\_\+t \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{main_8cpp_a958d14fa8118b48f97dd7d3860810746}{My\+\_\+timer}} = NULL
+\item 
+const int \mbox{\hyperlink{main_8cpp_add59e3c003ca51acdd76c116d8bb7a91}{max\+Arrays}} = 3
+\item 
+int \mbox{\hyperlink{main_8cpp_a2c93dcebc8b977725feff2de41277b79}{selected\+Array}} = 0
+\item 
+int \mbox{\hyperlink{main_8cpp_a1b2d02e57a0d15e329441f2563cc849a}{arr\+Beats}} \mbox{[}\mbox{\hyperlink{main_8cpp_add59e3c003ca51acdd76c116d8bb7a91}{max\+Arrays}}\mbox{]}\mbox{[}40\mbox{]}
+\begin{DoxyCompactList}\small\item\em Contains 3 rhytms\+: Normal, Tachycardia, Fibrilation\+: \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{main_8cpp_ab0560092cbaa233e74bb0d543a85965d}{bpm}} = 40
+\item 
+float \mbox{\hyperlink{main_8cpp_a4469c9472f58e0780b5b4e99d000ab2f}{signal\+Str}} = 1
+\item 
+float \mbox{\hyperlink{main_8cpp_a2e0a8e48b6b619ebd3d85e05d651dcdc}{corrigated\+Str}} = 1
+\item 
+float \mbox{\hyperlink{main_8cpp_a81d9f165b1e496d7ee3acfc4dffe61f5}{baseline}} = 66
+\item 
+int \mbox{\hyperlink{main_8cpp_ae0d22272b68e75d19ac0b80c01f806b6}{freq}}
+\item 
+int \mbox{\hyperlink{main_8cpp_a5a03dd16c6eae1169bd78c390e447e80}{amp}}
+\item 
+bool \mbox{\hyperlink{main_8cpp_a103461bce663699a36ceb88405b94a1f}{flatline}} = false
+\item 
+volatile bool \mbox{\hyperlink{main_8cpp_aadbad1ab8be2e9a1f7b72785c862f7a0}{state}} = LOW
+\begin{DoxyCompactList}\small\item\em Bool used for debounce of button press. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{main_8cpp_a6312fb8e7e002c9bda6d5023f4153320}\label{main_8cpp_a6312fb8e7e002c9bda6d5023f4153320} 
+\index{main.cpp@{main.cpp}!ampliPin@{ampliPin}}
+\index{ampliPin@{ampliPin}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{ampliPin}{ampliPin}}
+{\footnotesize\ttfamily \#define ampli\+Pin~14}
+
+
+
+Potentiometer 2, controls amplitude (systolic/diastolic pressure) 
+
+\Hypertarget{main_8cpp_a352fec4313db424629486e83da01de55}\label{main_8cpp_a352fec4313db424629486e83da01de55} 
+\index{main.cpp@{main.cpp}!buttonPin@{buttonPin}}
+\index{buttonPin@{buttonPin}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{buttonPin}{buttonPin}}
+{\footnotesize\ttfamily \#define button\+Pin~15}
+
+\Hypertarget{main_8cpp_a2764d6beffc5654bd55f73c49843d1a7}\label{main_8cpp_a2764d6beffc5654bd55f73c49843d1a7} 
+\index{main.cpp@{main.cpp}!freqPin@{freqPin}}
+\index{freqPin@{freqPin}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{freqPin}{freqPin}}
+{\footnotesize\ttfamily \#define freq\+Pin~4}
+
+
+
+Potentiometer 1, controls frequency (heart rate) 
+
+\Hypertarget{main_8cpp_a1a56ea4d69b5651122b6fb8a879ec8c4}\label{main_8cpp_a1a56ea4d69b5651122b6fb8a879ec8c4} 
+\index{main.cpp@{main.cpp}!greenLED@{greenLED}}
+\index{greenLED@{greenLED}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{greenLED}{greenLED}}
+{\footnotesize\ttfamily \#define green\+LED~13}
+
+\Hypertarget{main_8cpp_a49ba715e713d99d1a5c20429dacaf073}\label{main_8cpp_a49ba715e713d99d1a5c20429dacaf073} 
+\index{main.cpp@{main.cpp}!ledPin@{ledPin}}
+\index{ledPin@{ledPin}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{ledPin}{ledPin}}
+{\footnotesize\ttfamily \#define led\+Pin~2}
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{main_8cpp_ab95b031271b290306e5692f332a388ae}\label{main_8cpp_ab95b031271b290306e5692f332a388ae} 
+\index{main.cpp@{main.cpp}!flatlineCheck@{flatlineCheck}}
+\index{flatlineCheck@{flatlineCheck}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{flatlineCheck()}{flatlineCheck()}}
+{\footnotesize\ttfamily void flatline\+Check (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+If the "{}patient"{} is flatlining, the signal strenght (amplitude of the heartbeat) is gradually diminshed. 
+
+Else, it is gradually increased until normal\+:\Hypertarget{main_8cpp_a284efb0a3d19dcac39428af341fcb4cf}\label{main_8cpp_a284efb0a3d19dcac39428af341fcb4cf} 
+\index{main.cpp@{main.cpp}!floatMap@{floatMap}}
+\index{floatMap@{floatMap}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{floatMap()}{floatMap()}}
+{\footnotesize\ttfamily float float\+Map (\begin{DoxyParamCaption}\item[{float}]{x,  }\item[{float}]{in\+\_\+min,  }\item[{float}]{in\+\_\+max,  }\item[{float}]{out\+\_\+min,  }\item[{float}]{out\+\_\+max }\end{DoxyParamCaption})}
+
+Helper function for translating digital value (x) to a value within a given range (out\+\_\+min, out\+\_\+max). Where in\+\_\+min is the minimum value, and in\+\_\+max the maximum, e.\+g. 12 bit =\texorpdfstring{$>$}{>} 0 -\/ 4095. \Hypertarget{main_8cpp_abef6dd5b809e8a2ad491477bede9eb49}\label{main_8cpp_abef6dd5b809e8a2ad491477bede9eb49} 
+\index{main.cpp@{main.cpp}!heartBeat@{heartBeat}}
+\index{heartBeat@{heartBeat}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{heartBeat()}{heartBeat()}}
+{\footnotesize\ttfamily void heart\+Beat (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC). 
+
+Get the number of entries in the array\+: ~\newline
+
+
+Iterate across the array, printing the beat value for each.
+
+Normalize heartbeat
+
+Make the range static\+:
+
+Plot the heart beat\Hypertarget{main_8cpp_afe461d27b9c48d5921c00d521181f12f}\label{main_8cpp_afe461d27b9c48d5921c00d521181f12f} 
+\index{main.cpp@{main.cpp}!loop@{loop}}
+\index{loop@{loop}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{loop()}{loop()}}
+{\footnotesize\ttfamily void loop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Reattach interrupt event if it occured (to prevent debounce), call \doxylink{main_8cpp_abef6dd5b809e8a2ad491477bede9eb49}{heart\+Beat()} continuously. 
+
+\Hypertarget{main_8cpp_ada06ab1c4bbd307a9fea75726c8894f1}\label{main_8cpp_ada06ab1c4bbd307a9fea75726c8894f1} 
+\index{main.cpp@{main.cpp}!onTimer@{onTimer}}
+\index{onTimer@{onTimer}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{onTimer()}{onTimer()}}
+{\footnotesize\ttfamily void IRAM\+\_\+\+ATTR on\+Timer (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Timer interrupt that reads input (potentiometers) and translates these to useful values. 
+
+\Hypertarget{main_8cpp_a4fc01d736fe50cf5b977f755b675f11d}\label{main_8cpp_a4fc01d736fe50cf5b977f755b675f11d} 
+\index{main.cpp@{main.cpp}!setup@{setup}}
+\index{setup@{setup}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{setup()}{setup()}}
+{\footnotesize\ttfamily void setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Set up relevant pins, timer interrupt, and event interrupt. 
+
+\Hypertarget{main_8cpp_a2e6678c8d43cfdbf3351320ae20f0315}\label{main_8cpp_a2e6678c8d43cfdbf3351320ae20f0315} 
+\index{main.cpp@{main.cpp}!switchBeat@{switchBeat}}
+\index{switchBeat@{switchBeat}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{switchBeat()}{switchBeat()}}
+{\footnotesize\ttfamily void switch\+Beat (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Function called on button press, changing the selected heartbeat. 
+
+Avoid debounce by detaching interrupt after initial press, reattach in \doxylink{main_8cpp_afe461d27b9c48d5921c00d521181f12f}{loop()}\+:
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{main_8cpp_a5a03dd16c6eae1169bd78c390e447e80}\label{main_8cpp_a5a03dd16c6eae1169bd78c390e447e80} 
+\index{main.cpp@{main.cpp}!amp@{amp}}
+\index{amp@{amp}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{amp}{amp}}
+{\footnotesize\ttfamily int amp}
+
+\Hypertarget{main_8cpp_a1b2d02e57a0d15e329441f2563cc849a}\label{main_8cpp_a1b2d02e57a0d15e329441f2563cc849a} 
+\index{main.cpp@{main.cpp}!arrBeats@{arrBeats}}
+\index{arrBeats@{arrBeats}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{arrBeats}{arrBeats}}
+{\footnotesize\ttfamily int arr\+Beats\mbox{[}\mbox{\hyperlink{main_8cpp_add59e3c003ca51acdd76c116d8bb7a91}{max\+Arrays}}\mbox{]}\mbox{[}40\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \{66,\ 66,\ 66,\ 66,\ 66,\ 72,\ 78,\ 82,\ 78,\ 72,\ 70,\ 66,\ 66,\ 66,\ 66,\ 66,\ 90,\ 132,\ 180,\ 255,\ 160,\ 132,\ 72,\ 0,\ 31,\ 66,\ 66,\ 66,\ 66,\ 66,\ 70,\ 82,\ 90,\ 86,\ 72,\ 66,\ 66,\ 66,\ 66,\ 66\},}
+\DoxyCodeLine{\ \ \{66,\ 66,\ 66,\ 90,\ 180,\ 255,\ 60,\ 66,\ 78,\ 60,\ 66,\ 66,\ 66,\ 90,\ 180,\ 255,\ 60,\ 66,\ 78,\ 60,\ 66,\ 66,\ 66,\ 90,\ 180,\ 255,\ 60,\ 66,\ 78,\ 60,\ 66,\ 66,\ 66,\ 90,\ 180,\ 255,\ 60,\ 66,\ 78,\ 60\},}
+\DoxyCodeLine{\ \ \{66,\ 88,\ 92,\ 76,\ 66,\ 60,\ 78,\ 92,\ 110,\ 92,\ 78,\ 66,\ 80,\ 98,\ 76,\ 60,\ 66,\ 82,\ 92,\ 66,\ 66,\ 88,\ 92,\ 76,\ 66,\ 60,\ 78,\ 92,\ 110,\ 92,\ 78,\ 66,\ 80,\ 98,\ 76,\ 60,\ 66,\ 82,\ 92,\ 66\}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Contains 3 rhytms\+: Normal, Tachycardia, Fibrilation\+: 
+
+\Hypertarget{main_8cpp_a81d9f165b1e496d7ee3acfc4dffe61f5}\label{main_8cpp_a81d9f165b1e496d7ee3acfc4dffe61f5} 
+\index{main.cpp@{main.cpp}!baseline@{baseline}}
+\index{baseline@{baseline}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{baseline}{baseline}}
+{\footnotesize\ttfamily float baseline = 66}
+
+\Hypertarget{main_8cpp_ab0560092cbaa233e74bb0d543a85965d}\label{main_8cpp_ab0560092cbaa233e74bb0d543a85965d} 
+\index{main.cpp@{main.cpp}!bpm@{bpm}}
+\index{bpm@{bpm}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{bpm}{bpm}}
+{\footnotesize\ttfamily float bpm = 40}
+
+\Hypertarget{main_8cpp_a2e0a8e48b6b619ebd3d85e05d651dcdc}\label{main_8cpp_a2e0a8e48b6b619ebd3d85e05d651dcdc} 
+\index{main.cpp@{main.cpp}!corrigatedStr@{corrigatedStr}}
+\index{corrigatedStr@{corrigatedStr}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{corrigatedStr}{corrigatedStr}}
+{\footnotesize\ttfamily float corrigated\+Str = 1}
+
+\Hypertarget{main_8cpp_a103461bce663699a36ceb88405b94a1f}\label{main_8cpp_a103461bce663699a36ceb88405b94a1f} 
+\index{main.cpp@{main.cpp}!flatline@{flatline}}
+\index{flatline@{flatline}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{flatline}{flatline}}
+{\footnotesize\ttfamily bool flatline = false}
+
+\Hypertarget{main_8cpp_ae0d22272b68e75d19ac0b80c01f806b6}\label{main_8cpp_ae0d22272b68e75d19ac0b80c01f806b6} 
+\index{main.cpp@{main.cpp}!freq@{freq}}
+\index{freq@{freq}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{freq}{freq}}
+{\footnotesize\ttfamily int freq}
+
+\Hypertarget{main_8cpp_add59e3c003ca51acdd76c116d8bb7a91}\label{main_8cpp_add59e3c003ca51acdd76c116d8bb7a91} 
+\index{main.cpp@{main.cpp}!maxArrays@{maxArrays}}
+\index{maxArrays@{maxArrays}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{maxArrays}{maxArrays}}
+{\footnotesize\ttfamily const int max\+Arrays = 3}
+
+\Hypertarget{main_8cpp_a958d14fa8118b48f97dd7d3860810746}\label{main_8cpp_a958d14fa8118b48f97dd7d3860810746} 
+\index{main.cpp@{main.cpp}!My\_timer@{My\_timer}}
+\index{My\_timer@{My\_timer}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{My\_timer}{My\_timer}}
+{\footnotesize\ttfamily hw\+\_\+timer\+\_\+t\texorpdfstring{$\ast$}{*} My\+\_\+timer = NULL}
+
+\Hypertarget{main_8cpp_a2c93dcebc8b977725feff2de41277b79}\label{main_8cpp_a2c93dcebc8b977725feff2de41277b79} 
+\index{main.cpp@{main.cpp}!selectedArray@{selectedArray}}
+\index{selectedArray@{selectedArray}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{selectedArray}{selectedArray}}
+{\footnotesize\ttfamily int selected\+Array = 0}
+
+\Hypertarget{main_8cpp_a4469c9472f58e0780b5b4e99d000ab2f}\label{main_8cpp_a4469c9472f58e0780b5b4e99d000ab2f} 
+\index{main.cpp@{main.cpp}!signalStr@{signalStr}}
+\index{signalStr@{signalStr}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{signalStr}{signalStr}}
+{\footnotesize\ttfamily float signal\+Str = 1}
+
+\Hypertarget{main_8cpp_aadbad1ab8be2e9a1f7b72785c862f7a0}\label{main_8cpp_aadbad1ab8be2e9a1f7b72785c862f7a0} 
+\index{main.cpp@{main.cpp}!state@{state}}
+\index{state@{state}!main.cpp@{main.cpp}}
+\doxysubsubsection{\texorpdfstring{state}{state}}
+{\footnotesize\ttfamily volatile bool state = LOW}
+
+
+
+Bool used for debounce of button press. 
+
