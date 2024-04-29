@@ -5,7 +5,7 @@
 #define ampliPin 14
 #define ledPin 2
 #define greenLED 13
-// #define yellowLED 12 (Unused currently)
+#define yellowLED 12 
 #define buttonPin 15
 
 hw_timer_t *My_timer = NULL;
@@ -42,7 +42,9 @@ float floatMap(float x, float in_min, float in_max, float out_min, float out_max
 void setup() {
   Serial.begin(115200);
 
+  pinMode(ledPin, OUTPUT);
   pinMode(greenLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
   pinMode(buttonPin, INPUT_PULLUP);
 
   My_timer = timerBegin(0, 80, true);
@@ -61,17 +63,20 @@ void loop() {
       state = false;
     }
   }
+  delay(10); // Inserted delay to avoid collision no core resulting in panic reset.
   heartBeat();
 }
 
 //! Timer interrupt that reads input (potentiometers) and translates these to useful values
 void IRAM_ATTR onTimer(){
   digitalWrite(greenLED, !digitalRead(greenLED));
+  // digitalWrite(yellowLED, !digitalRead(yellowLED));
   freq = analogRead(freqPin);
   bpm = 60000 / floatMap(freq, 0, 4095, 40, 240);
   amp = analogRead(ampliPin);
   signalStr = floatMap(amp, 0, 4095, 0, 1);
-  if (signalStr <= 0.1) signalStr = 0.1;
+  if (signalStr < 0.1) signalStr = 0.1;
+
 }
 
 //! Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC).
@@ -87,6 +92,11 @@ void heartBeat() {
           float baselineStr = baseline * actualStr;
           float beatStr = arrBeats[selectedArray][i] * actualStr;
           float normalizedBeatStr = beatStr - baselineStr;
+
+          // Light up yellow LED in inverted relation. I.e. the lower the amplitude, the brighter the LED:
+          int LEDoutput = floatMap(amp, 0, 4095, 255, 0);
+          analogWrite(yellowLED, LEDoutput);
+          
 
           //! Make the range static:
           Serial.print("Min:");
@@ -108,6 +118,7 @@ void heartBeat() {
 void flatlineCheck() {
   if (flatline) {
     corrigatedStr = corrigatedStr * 0.75;
+    if (corrigatedStr < 0.1) digitalWrite(ledPin, HIGH);
   }
   //! Else, it is gradually increased until normal: 
   else {
@@ -116,6 +127,7 @@ void flatlineCheck() {
     } else {
       corrigatedStr = 1;
     }
+    if (corrigatedStr > 0.1) digitalWrite(ledPin, LOW);
   }
 }
 
