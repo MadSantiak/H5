@@ -57,6 +57,7 @@ void setup() {
 
 //! Reattach interrupt event if it occured (to prevent debounce), call heartBeat() continuously.
 void loop() {
+  
   if (state) {
     if (digitalRead(buttonPin)) {
       attachInterrupt(digitalPinToInterrupt(buttonPin), switchBeat, FALLING);
@@ -65,6 +66,10 @@ void loop() {
   }
   delay(10); // Inserted delay to avoid collision no core resulting in panic reset.
   heartBeat();
+}
+
+void changeTimer() {
+  
 }
 
 //! Timer interrupt that reads input (potentiometers) and translates these to useful values
@@ -77,6 +82,8 @@ void IRAM_ATTR onTimer(){
   signalStr = floatMap(amp, 0, 4095, 0, 1);
   if (signalStr < 0.1) signalStr = 0.1;
 
+  int timer = bpm * 1000;
+  timerAlarmWrite(My_timer, timer, true);
 }
 
 //! Primary function for mimicing heartbeat. Only uses Serial Plotter (due to lack of output for DAC).
