@@ -1,3 +1,7 @@
+/**
+ * @file
+ * Contains the javascript to be run on the index page.
+ */
 //! Download button
 var downloadButton = document.getElementById('download-data');
 
@@ -6,7 +10,10 @@ downloadButton.addEventListener('click', function() {
   window.location.href = "/download";
 });
 
-//! Instantiate chart
+/**
+ * @var
+ * Defines and instantiates the chart on which temperatuers will be plotted.
+ */
 var chartT = new Highcharts.Chart({
   chart:{ renderTo : 'chart-temperature' },
   title: { text: 'Temperature' },
@@ -29,12 +36,19 @@ var chartT = new Highcharts.Chart({
   credits: { enabled: false }
 });
 
-//! Fetch the slider element:
+/**
+ * @var
+ * Fetches the slider element from the html file.
+ */
 var timeSlider = document.getElementById('time-slider');
-var allTimestamps = []; // Store all timestamps initially
-var allTemperatures = []; // Store all temperatures initially
+var allTimestamps = []; //! Array to store all timestamps initially
+var allTemperatures = []; //! Array to store all temperatures initially
 
-// Function to update chart based on slider value
+/**
+ * @function
+ * Updates chart based on the selected value on the slider
+ * @param {} hours 
+ */
 function updateChartData(hours) {
   var filteredTimestamps = [];
   var filteredTemperatures = [];
@@ -44,7 +58,7 @@ function updateChartData(hours) {
   var currentTime = Date.now();
   var threshold = currentTime - (hours * oneHour);
 
-  // Filter data based on slider value (last 'hours')
+  //! Filter data based on slider value (last 'hours')
   allTimestamps.forEach(function(timestamp, index) {
     if (timestamp >= threshold) {
       filteredTimestamps.push(timestamp);
@@ -52,18 +66,21 @@ function updateChartData(hours) {
     }
   });
 
-  // Update chart data with filtered values
+  //! Update chart data with filtered values
   chartT.series[0].setData(filteredTimestamps.map((timestamp, index) => ({ x: timestamp, y: filteredTemperatures[index] })));
 }
+//! Initiates the chart with the historical data, set to 24 hour range by default.
 updateChartData(24);
 
-// Update chart on slider change
+//! Update chart on slider change
 timeSlider.addEventListener('change', function() {
   var hours = parseInt(this.value);
   updateChartData(hours);
 });
 
-// Fetch data and store all values initially
+/**
+ * Fetches and plots the entire logged temperature, within the limits of the hours selected via the slider.
+ */
 function getTempHistory() {
   console.log("Getting history..");
   var xmlhttp = new XMLHttpRequest();
@@ -73,13 +90,13 @@ function getTempHistory() {
       var csvData = this.responseText;
       var lines = csvData.split("\n"); // Split data into lines
 
-      // Skip the header line (assuming the first line contains labels)
+      //! Skip the header line
       lines.shift(); // Remove the first element (header)
 
-      // Parse each data line
+      //! Parse each data line
       lines.forEach(function(line) {
         var values = line.split(","); // Split line into values
-        var timestamp = Date.parse(values[1] + " " + values[2]); // Parse date+time to timestamp
+        var timestamp = Date.parse(values[1] + " " + values[2]) + 7200000; // Parse date+time to timestamp
         var temperature = parseFloat(values[3]); // Convert temperature to number
 
         allTimestamps.push(timestamp);
@@ -93,17 +110,17 @@ function getTempHistory() {
   xmlhttp.open("GET", "/history", true);
   xmlhttp.send();
 }
-
-
-
-// Call getTempHistory on page load 
+// Call on page load.
 getTempHistory();
 
+/**
+ * Periodically (every 1 minute) gets the temperature from the sensor
+ */
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      var x = (new Date()).getTime(),
+      var x = (new Date()).getTime() + 7200000,
           y = parseFloat(this.responseText);
       //console.log(this.responseText);
       if(chartT.series[0].data.length > 40) {
@@ -115,5 +132,5 @@ setInterval(function ( ) {
   };
   xhttp.open("GET", "/temperature", true);
   xhttp.send();
-}, 5000 ) ;
+}, 60000 ) ;
 

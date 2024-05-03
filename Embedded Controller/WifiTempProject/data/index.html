@@ -8,6 +8,8 @@ copies or substantial portions of the Software. -->
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://code.highcharts.com/highcharts.js"></script>
+  
+  
   <style>
     body {
       min-width: 310px;
@@ -26,9 +28,13 @@ copies or substantial portions of the Software. -->
   <h2>ESP Weather Station</h2>
   <div id="chart-temperature" class="container"></div>
   <div id="chart-temperature"></div>
-  <input type="range" min="1" max="24" value="24" id="time-slider">
+  <label for="time-slider">Hours:</label>
+  <div>
+    <span>1</span>
+    <input type="range" min="1" max="24" value="24" id="time-slider">
+    <span>24</span>
+  </div>
   <button id="download-data">Download Data (.txt)</button>
-  <script src="servercode.js"></script>  
+  <script src="/servercode.js"></script>  
 </body>
-
 </html>

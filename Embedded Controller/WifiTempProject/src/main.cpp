@@ -1,6 +1,6 @@
-#include <Arduino.h>
 
 /**
+ * @file
  * Project: WiFi Thermometer with visualization
  * Author: Mads Søndergaard
  * Manage: Bo Elbæk Steffensen
@@ -10,6 +10,7 @@
  * - Added slider to widen or narrow the range (temporal) of data
  * 
 */
+#include <Arduino.h>
 
 // Libraries for SD card
 #include "FS.h"
@@ -47,40 +48,43 @@ void logSDCard();
 bool initWiFi();
 
 // Variables to access and fetch SSID and Password supplied by the user during initial run.
+//! Path to configuration file containing SSID
 const char* ssidPath = "/ssid.txt";
+//! Path to configuration file containing Password
 const char* passPath = "/pass.txt";
+//! Variable used to check input is from the SSID field
 const char* PARAM_INPUT_1 = "ssid";
+//! Variable used to check input is from the Password field
 const char* PARAM_INPUT_2 = "pass";
 String pass;
 String ssid;
 
-// Define CS pin for the SD card module
+//! Define CS pin for the SD card module
 #define SD_CS 5
 
-// Save reading number on RTC memory
+//! Save reading number on RTC memory
 RTC_DATA_ATTR int readingID = 0;
 
 String dataMessage;
 
-// Data wire is connected to ESP32 GPIO 21
+//! Data wire is connected to ESP32 GPIO 21
 #define ONE_WIRE_BUS 21
-// Setup a oneWire instance to communicate with a OneWire device
+//! Setup a oneWire instance to communicate with a OneWire device on the designated data wire
 OneWire oneWire(ONE_WIRE_BUS);
-// Pass our oneWire reference to Dallas Temperature sensor 
+//! Pass our oneWire reference to Dallas Temperature sensor 
 DallasTemperature sensors(&oneWire);
 
-// Temperature Sensor variables
+//! Temperature Sensor variables
 float temperature;
 
-// Define NTP Client to get time
+//! Define NTP Client to get time
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 
-// Variables to save date and time
+//! Variables to save date and time
 String formattedDate;
 String dayStamp;
 String timeStamp;
-
 
 
 void setup() {
@@ -93,7 +97,6 @@ void setup() {
   ssid = readFile(SPIFFS, ssidPath);
   pass = readFile(SPIFFS, passPath);
   
-
   //! Initialize SD card
   SD.begin(SD_CS);  
   if(!SD.begin(SD_CS)) {
@@ -138,6 +141,10 @@ void setup() {
     server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SD, "/data.txt", String(), "text/plain");
     });
+    server.on("/servercode.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/servercode.js");
+    });
+ 
     server.begin();   
   }
   //! If unsuccesful, starts local open AP for the user to connect to and configure
@@ -205,12 +212,15 @@ void setup() {
 }
 
 void loop() {
+  /**
+   * Loop() is unused.
+  */
 }
 
 
 void setTimezone(String timezone){
   /**
-   * Sets the timezone.
+   * Sets the timezone for the environment using the String passed
   */
   Serial.printf("  Setting Timezone to %s\n",timezone.c_str());
   setenv("TZ",timezone.c_str(),1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
@@ -219,7 +229,7 @@ void setTimezone(String timezone){
 
 void initSPIFFS() {
   /**
-   * Attempts to initialize SPI filesystem.
+   * Attempts to initialize SPI filesystem and checks whether it fails or not.
   */
   if (!SPIFFS.begin(true)) {
     Serial.println("An error has occurred while mounting SPIFFS");
@@ -233,9 +243,11 @@ String getReadings(){
   */
   sensors.requestTemperatures(); 
   temperature = sensors.getTempCByIndex(0); // Temperature in Celsius  
+  getTimeStamp();
+  readingID++;
+  logSDCard();
   return String(temperature);
 }
-
 
 void getTimeStamp() {
   /**
@@ -273,6 +285,9 @@ void logSDCard() {
 
 // Write to the SD card (DON'T MODIFY THIS FUNCTION)
 void writeFile(fs::FS &fs, const char * path, const char * message) {
+  /**
+   * Attempts to write to the file at the designated path (path), based on the defined filesystem (fs).
+  */
   Serial.printf("Writing file: %s\n", path);
 
   File file = fs.open(path, FILE_WRITE);
@@ -306,6 +321,9 @@ void appendFile(fs::FS &fs, const char * path, const char * message) {
 }
 
 String readFile(fs::FS &fs, const char * path) {
+  /**
+   * Attempts to read the file at a given path, using the designated filesystem.
+  */
   Serial.printf("Reading file: %s\r\n", path);
 
   File file = fs.open(path);
@@ -356,7 +374,7 @@ bool initWiFi() {
     Serial.println("Undefined SSID or Password.");
     return false;
   }
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_STA); 
 
   WiFi.begin(ssid.c_str(), pass.c_str());
   while (WiFi.status() != WL_CONNECTED) {
