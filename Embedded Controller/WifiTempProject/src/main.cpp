@@ -4,11 +4,11 @@
  * Project: WiFi Thermometer with visualization
  * Author: Mads Søndergaard
  * Manage: Bo Elbæk Steffensen
- * 
+ *
  * Added functionality beyond requirement specifications:
  * - Added download option for stored temperature data (entire .txt file)
  * - Added slider to widen or narrow the range (temporal) of data
- * 
+ *
 */
 #include <Arduino.h>
 
@@ -32,7 +32,7 @@
 #include <SPIFFS.h>
 
 // Define port number for AsyncWebServer
-AsyncWebServer server(80); 
+AsyncWebServer server(80);
 
 // Prototype functions
 void setTimezone(String timezone);
@@ -72,7 +72,7 @@ String dataMessage;
 #define ONE_WIRE_BUS 21
 //! Setup a oneWire instance to communicate with a OneWire device on the designated data wire
 OneWire oneWire(ONE_WIRE_BUS);
-//! Pass our oneWire reference to Dallas Temperature sensor 
+//! Pass our oneWire reference to Dallas Temperature sensor
 DallasTemperature sensors(&oneWire);
 
 //! Temperature Sensor variables
@@ -97,9 +97,9 @@ void setup() {
   initSPIFFS();
   ssid = readFile(SPIFFS, ssidPath);
   pass = readFile(SPIFFS, passPath);
-  
+
   //! Initialize SD card
-  SD.begin(SD_CS);  
+  SD.begin(SD_CS);
   if(!SD.begin(SD_CS)) {
     Serial.println("Card Mount Failed");
     return;
@@ -124,7 +124,14 @@ void setup() {
     writeFile(SD, "/data.txt", "Reading ID, Date, Hour, Temperature \r\n");
   }
   else {
-    Serial.println("File already exists");  
+    Serial.println("File already exists");
+    while (file.available())
+    {
+      String line = file.readStringUntil('\n');
+      readingID = line.substring(0, line.indexOf(",")).toInt();
+    }
+    Serial.print("Last ID: ");
+    Serial.println(readingID);
   }
   file.close();
 
@@ -146,17 +153,16 @@ void setup() {
       request->send(SPIFFS, "/servercode.js");
     });
     server.on("/deletelog", HTTP_POST, [](AsyncWebServerRequest *request) {
-    deleteLog(); // Call the deleteLog function to delete the file
-    
-    // Respond to the client based on the deletion success
-    if (SD.exists("/data.txt")) {
-      request->send(404, "text/plain", "Log file not found (might be already deleted)");
-    } else {
-      request->send(200, "text/plain", "Log file deleted successfully");
-    }
-  });
- 
-    server.begin();   
+      deleteLog(); // Call the deleteLog function to delete the file
+      // Respond to the client based on the deletion success
+      if (SD.exists("/data.txt")) {
+        request->send(404, "text/plain", "Log file not found (might be already deleted)");
+      } else {
+        request->send(200, "text/plain", "Log file deleted successfully");
+      }
+    });
+
+    server.begin();
   }
   //! If unsuccesful, starts local open AP for the user to connect to and configure
   else {
@@ -167,15 +173,15 @@ void setup() {
 
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
-    Serial.println(IP); 
+    Serial.println(IP);
 
     // Web Server Root URL
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/wifimanager.html", "text/html");
     });
-    
+
     server.serveStatic("/", SPIFFS, "/");
-    
+
     //! Get user configurations and store them in their respective files.
     server.on("/", HTTP_POST, [](AsyncWebServerRequest *request) {
       int params = request->params();
@@ -198,7 +204,7 @@ void setup() {
             // Write file to save value
             writeFile(SPIFFS, passPath, pass.c_str());
           }
-         
+
           //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
       }
@@ -211,15 +217,10 @@ void setup() {
 
 
   //! Start the DallasTemperature library
-  sensors.begin(); 
+  sensors.begin();
 
   //! Get readings, timestamp, and log data to SD card.
-  getReadings();
-  getTimeStamp();
-  logSDCard();
-  
-  // Increment readingID on every new reading
-  readingID++;
+  // getReadings();
 }
 
 void loop() {
@@ -250,12 +251,16 @@ void initSPIFFS() {
 
 String getReadings(){
   /**
-   * Gets temperature from DS18B20 Sensor and returns the string value.
+   * Gets temperature from DS18B20 Sensor and returns the string value to the javascript reponsible for plotting the new readings.
+   * Additionally gets timestamp, increments the readingID variable, and logs it to the data.txt file on the SD card.
   */
-  sensors.requestTemperatures(); 
-  temperature = sensors.getTempCByIndex(0); // Temperature in Celsius  
+  sensors.requestTemperatures();
+  temperature = sensors.getTempCByIndex(0); // Temperature in Celsius
+  //! Get timestamp
   getTimeStamp();
+  //! Increment readingID.
   readingID++;
+  //! Log to SD Card
   logSDCard();
   return String(temperature);
 }
@@ -287,7 +292,7 @@ void logSDCard() {
   /**
    * Takes the gathered data and appends it to the data.txt file stored on the SD.
   */
-  dataMessage = String(readingID) + "," + String(dayStamp) + "," + String(timeStamp) + "," + 
+  dataMessage = String(readingID) + "," + String(dayStamp) + "," + String(timeStamp) + "," +
                 String(temperature) + "\r\n";
   Serial.print("Save data: ");
   Serial.println(dataMessage);
@@ -315,7 +320,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
   Serial.printf("Writing file: %s\n", path);
 
   File file = fs.open(path, FILE_WRITE);
-  if(!file) { 
+  if(!file) {
     Serial.println("Failed to open file for writing");
     return;
   }
@@ -355,11 +360,11 @@ String readFile(fs::FS &fs, const char * path) {
     Serial.println("- failed to open file for reading");
     return String();
   }
-  
+
   String fileContent;
   while(file.available()){
     fileContent = file.readStringUntil('\n');
-    break;     
+    break;
   }
   return fileContent;
 }
@@ -382,7 +387,7 @@ String readSDFile(const char* path) {
 String tempHistory() {
   /**
    * Fetches the entirety of the data.txt contents. To be sent to Javascript for processing (i.e. turning the CSV data into visualized data)
-   * This is done to avoid load on the ESP32, but also due to the complexity of attempting to do so on the ESP, rather than with simple Javascript 
+   * This is done to avoid load on the ESP32, but also due to the complexity of attempting to do so on the ESP, rather than with simple Javascript
    * comprehension.
   */
   String data = readSDFile("/data.txt");
@@ -398,7 +403,7 @@ bool initWiFi() {
     Serial.println("Undefined SSID or Password.");
     return false;
   }
-  WiFi.mode(WIFI_STA); 
+  WiFi.mode(WIFI_STA);
 
   WiFi.begin(ssid.c_str(), pass.c_str());
   while (WiFi.status() != WL_CONNECTED) {

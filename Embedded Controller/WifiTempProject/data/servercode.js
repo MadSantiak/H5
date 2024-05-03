@@ -78,7 +78,7 @@ function updateChartData(hours) {
 
   // Assuming timestamps are in milliseconds
   var oneHour = 1000 * 60 * 60; // Milliseconds in an hour
-  var currentTime = Date.now();
+  var currentTime = Date.now() + 7200000;
   var threshold = currentTime - (hours * oneHour);
 
   //! Filter data based on slider value (last 'hours')
@@ -145,7 +145,9 @@ setInterval(function ( ) {
     if (this.readyState == 4 && this.status == 200) {
       var x = (new Date()).getTime() + 7200000,
           y = parseFloat(this.responseText);
-      //console.log(this.responseText);
+      allTemperatures.push(y);
+      allTimestamps.push(x);
+      console.log(allTimestamps);
       if(chartT.series[0].data.length > 40) {
         chartT.series[0].addPoint([x, y], true, true, true);
       } else {
