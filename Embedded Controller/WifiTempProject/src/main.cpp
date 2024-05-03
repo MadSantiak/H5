@@ -45,6 +45,7 @@ String getReadings();
 String tempHistory();
 void getTimeStamp();
 void logSDCard();
+void deleteLog();
 bool initWiFi();
 
 // Variables to access and fetch SSID and Password supplied by the user during initial run.
@@ -144,6 +145,16 @@ void setup() {
     server.on("/servercode.js", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/servercode.js");
     });
+    server.on("/deletelog", HTTP_POST, [](AsyncWebServerRequest *request) {
+    deleteLog(); // Call the deleteLog function to delete the file
+    
+    // Respond to the client based on the deletion success
+    if (SD.exists("/data.txt")) {
+      request->send(404, "text/plain", "Log file not found (might be already deleted)");
+    } else {
+      request->send(200, "text/plain", "Log file deleted successfully");
+    }
+  });
  
     server.begin();   
   }
@@ -281,6 +292,19 @@ void logSDCard() {
   Serial.print("Save data: ");
   Serial.println(dataMessage);
   appendFile(SD, "/data.txt", dataMessage.c_str());
+}
+
+void deleteLog() {
+  /**
+   * Deletes the Thermometer readings if present.
+  */
+  if(SD.exists("/data.txt"))
+  {
+    SD.remove("/data.txt");
+    Serial.println("File deleted..");
+  }
+  Serial.println("Regenerating file");
+  writeFile(SD, "/data.txt", "Reading ID, Date, Hour, Temperature \r\n");
 }
 
 // Write to the SD card (DON'T MODIFY THIS FUNCTION)

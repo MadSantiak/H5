@@ -10,6 +10,29 @@ downloadButton.addEventListener('click', function() {
   window.location.href = "/download";
 });
 
+//! Delete log button
+var deleteButton = document.getElementById('delete-data');
+
+//! Add event listener so endpoint for deleting log is used. Make sure chart is updated.
+deleteButton.addEventListener('click', function() {
+  // Send an AJAX request to the delete endpoint
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/deletelog', true);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      console.log('Log file deleted successfully');
+    } else {
+      console.error('Error deleting log file:', xhr.statusText);
+    }
+  };
+  xhr.onerror = function() {
+    console.error('Error contacting server (network error)');
+  };
+  updateChartData(24);
+  xhr.send();
+});
+
 /**
  * @var
  * Defines and instantiates the chart on which temperatuers will be plotted.
