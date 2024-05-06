@@ -495,10 +495,11 @@ bool initWiFi() {
   return true;
 }
 
-/**
- * Handles websocket events for troubleshooting purposes
-*/
+
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
+  /**
+   * Handles websocket events for troubleshooting purposes
+  */
   switch (type) {
     case WStype_CONNECTED:
       Serial.printf("[%u] WebSocket client connected\n", num);
@@ -512,10 +513,11 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
   }
 }
 
-/**
- * Handles POST request to delete a  specific reading given a readingID
-*/
+
 void handleDeleteReading(AsyncWebServerRequest *request) {
+  /**
+   * Handles POST request to delete a  specific reading given a readingID
+  */
   // Get the reading ID from the request parameters
   Serial.println("Deleting ID...");  
   String readingIDStr;
@@ -581,6 +583,9 @@ void handleDeleteReading(AsyncWebServerRequest *request) {
   request->send(200, "text/plain", "Reading deleted successfully");
 }
 
+/**
+ * Function that handles file upload by storing it in a temporary file, and if succesful, removes data.txt and renames the temporary file to data.txt instead.
+*/
 void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   static File file;
 

@@ -71,10 +71,10 @@ var timeSlider = document.getElementById('time-slider');
 var allTimestamps = []; //! Array to store all timestamps initially
 var allTemperatures = []; //! Array to store all temperatures initially
 
-// Fetch the checkbox element
+//! Fetch the checkbox element
 var showAllReadingsCheckbox = document.getElementById('show-all-readings');
 
-// Add event listener to the checkbox
+//! Add event listener to the checkbox
 showAllReadingsCheckbox.addEventListener('change', function() {
   if (this.checked) {
     // If checkbox is checked, update chart to show all readings
@@ -84,6 +84,7 @@ showAllReadingsCheckbox.addEventListener('change', function() {
     updateChartData(timeSlider.value);
   }
 });
+
 
 function updateChartData(hours) {
   var filteredTimestamps = [];
@@ -158,15 +159,15 @@ function getTempHistory() {
 // Call on page load.
 getTempHistory();
 
-// Create WebSocket connection
+//! Create WebSocket connection
 const socket = new WebSocket('ws://'+window.location.hostname+':81/');
 
-// Connection opened
+//! Connection opened
 socket.addEventListener('open', function (event) {
   console.log('WebSocket connected');
 });
 
-// Listen for messages
+//! Listen for messages
 socket.addEventListener('message', function (event) {
   console.log('Message from server ', event.data);
   // Handle received message here, update chart or do any other necessary action
@@ -193,6 +194,7 @@ socket.addEventListener('message', function (event) {
 });
 
 /**
+ * @function
  * Function to allow for deleting a single specific ID, primarily used during development to prune incorrect data logging.
  */
 function deleteReading() {
@@ -218,6 +220,7 @@ function deleteReading() {
   xhr.send("readingID=" + readingID);
 }
 
+//! Get element used for uploading file.
 document.getElementById('uploadForm').addEventListener('submit', function(event) {
   event.preventDefault();
 
