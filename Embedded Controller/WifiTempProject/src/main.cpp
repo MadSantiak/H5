@@ -42,6 +42,7 @@ void appendFile(fs::FS &fs, const char * path, const char * message);
 String readFile(fs::FS &fs, const char * path);
 String readSDFile(const char* path);
 String getReadings();
+String readLastLine(const char* path);
 String tempHistory();
 void getTimeStamp();
 void logSDCard();
@@ -87,6 +88,24 @@ String formattedDate;
 String dayStamp;
 String timeStamp;
 
+//! Define task stack size
+#define TASK_STACK_SIZE 4096
+
+//! Define task delay (5 minutes) // testing: 30 seconds
+#define TASK_DELAY_MS 30000
+
+//! Define task handle:
+TaskHandle_t taskHandle = NULL;
+
+// Define the task function
+void getReadingsTask(void *pvParameters) {
+  for (;;) {
+    // Call getReadings()
+    getReadings();
+    // Delay task execution
+    vTaskDelay(pdMS_TO_TICKS(TASK_DELAY_MS));
+  }
+}
 
 void setup() {
   /**
@@ -134,6 +153,9 @@ void setup() {
     Serial.println(readingID);
   }
   file.close();
+  
+  //! Initaite task to run periodically:
+  xTaskCreate(getReadingsTask, "getReadingsTask", TASK_STACK_SIZE, NULL, 1, &taskHandle);
 
   //! Attempt to initialize WiFi, and if succesful, serve endpoints (/temperature, /history, /download). Used in index.html script.
   if(initWiFi()) {
@@ -141,7 +163,8 @@ void setup() {
       request->send(SPIFFS, "/index.html");
     });
     server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send_P(200, "text/plain", getReadings().c_str());
+      String latestReading = readLastLine("/data.txt");
+      request->send(200, "text/plain", latestReading);
     });
     server.on("/history", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send_P(200, "text/plain", tempHistory().c_str());
@@ -213,6 +236,7 @@ void setup() {
       ESP.restart();
     });
     server.begin();
+
   }
 
 
@@ -247,6 +271,21 @@ void initSPIFFS() {
     Serial.println("An error has occurred while mounting SPIFFS");
   }
   Serial.println("SPIFFS mounted successfully");
+}
+
+String readLastLine(const char* path) {
+  File file = SD.open(path);
+  if (!file) {
+    Serial.println("Error opening file for reading");
+    return "";
+  }
+
+  String lastLine;
+  while (file.available()) {
+    lastLine = file.readStringUntil('\n');
+  }
+  file.close();
+  return lastLine;
 }
 
 String getReadings(){
