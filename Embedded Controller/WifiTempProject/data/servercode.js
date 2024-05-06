@@ -158,60 +158,86 @@ function getTempHistory() {
 // Call on page load.
 getTempHistory();
 
-// /**
-//  * Periodically (every 1 minute) gets the temperature from the sensor
-//  */
-// setInterval(function ( ) {
-//   var xhttp = new XMLHttpRequest();
-//   xhttp.onreadystatechange = function() {
-//     if (this.readyState == 4 && this.status == 200) {
-//       var x = (new Date()).getTime(),
-//           y = parseFloat(this.responseText);
-//       allTemperatures.push(y);
-//       allTimestamps.push(x);
-//       console.log(allTimestamps);
-//       if(chartT.series[0].data.length > 40) {
-//         chartT.series[0].addPoint([x, y], true, true, true);
-//       } else {
-//         chartT.series[0].addPoint([x, y], true, false, true);
-//       }
-//     }
-//   };
-//   xhttp.open("GET", "/temperature", true);
-//   xhttp.send();
-// }, 60000 ) ;
+// Create WebSocket connection
+const socket = new WebSocket('ws://'+window.location.hostname+':81/');
 
-function fetchLatestReadingAndInsertIntoGraph() {
-  fetch('/temperature')
-    .then(response => response.text())
-    .then(data => {
-      console.log("Fetching latest data..")
-      // Parse the CSV data
-      const [readingID, date, hour, temperature] = data.split(',');
-      // Convert date and hour to timestamp
-      const x = new Date(`${date} ${hour}`).getTime() + 7200000;
-      const y = parseFloat(temperature);
-      
-      // Check if the readingID is different from the last one
-      if (readingID != lastReadingID) {
-        // Add data to the graph
-        allTemperatures.push(y);
-        allTimestamps.push(x);
-        if (chartT.series[0].data.length > 40) {
-          chartT.series[0].addPoint([x, y], true, true, true);
-        } else {
-          chartT.series[0].addPoint([x, y], true, false, true);
-        }
-        
-        // Update the lastReadingID
-        lastReadingID = readingID;
+// Connection opened
+socket.addEventListener('open', function (event) {
+  console.log('WebSocket connected');
+});
+
+// Listen for messages
+socket.addEventListener('message', function (event) {
+  console.log('Message from server ', event.data);
+  // Handle received message here, update chart or do any other necessary action
+  const [readingID, dateTime, temperature] = event.data.split(",");
+  const x = new Date(dateTime).getTime() + 7200000;
+  const y = parseFloat(temperature);
+  
+  // Check if the readingID is different from the last one
+  if (readingID != lastReadingID) {
+    // Add data to the graph
+    allTemperatures.push(y);
+    allTimestamps.push(x);
+    if (chartT.series[0].data.length > 40) {
+      chartT.series[0].addPoint([x, y], true, true, true);
+    } else {
+      chartT.series[0].addPoint([x, y], true, false, true);
+    }
+    
+    // Update the lastReadingID
+    lastReadingID = readingID;
+  } else {
+    console.log("Duplicate reading ID, skipping.");
+  }
+});
+
+/**
+ * Function to allow for deleting a single specific ID, primarily used during development to prune incorrect data logging.
+ */
+function deleteReading() {
+  var readingID = document.getElementById('reading-id').value;
+  var deleteMessageElement = document.getElementById('delete-message');
+
+  // Send an XMLHttpRequest to the server to delete the reading
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (this.readyState == 4) {
+      if (this.status == 200) {
+        // Reading deleted successfully
+        deleteMessageElement.textContent = "Reading with ID " + readingID + " deleted successfully.";
       } else {
-        console.log("Duplicate reading ID, skipping.");
+        // Failed to delete reading
+        deleteMessageElement.textContent = "Failed to delete reading with ID " + readingID + ".";
       }
-    })
-    .catch(error => console.error('Error fetching latest reading:', error));
+    }
+  };
+  // Send a POST request to the server with the reading ID to delete
+  xhr.open("POST", "/delete-reading", true);
+  xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  xhr.send("readingID=" + readingID);
 }
 
-// Call fetchLatestReadingAndInsertIntoGraph initially and then every minute
-fetchLatestReadingAndInsertIntoGraph();
-setInterval(fetchLatestReadingAndInsertIntoGraph, 6000);
+document.getElementById('uploadForm').addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  var fileInput = document.getElementById('fileInput');
+  var file = fileInput.files[0];
+  if (!file) {
+    return;
+  }
+
+  var formData = new FormData();
+  formData.append('file', file);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/upload', true);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      document.getElementById('status').textContent = xhr.responseText;
+    } else {
+      document.getElementById('status').textContent = 'Upload failed';
+    }
+  };
+  xhr.send(formData);
+});

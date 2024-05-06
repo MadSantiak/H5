@@ -28,18 +28,32 @@ copies or substantial portions of the Software. -->
   <h2>ESP Weather Station</h2>
   <div id="chart-temperature" class="container"></div>
   <div id="chart-temperature"></div>
-  <label for="time-slider">Hours:</label>
   <div>
-    <span>1</span>
-    <input type="range" min="1" max="24" value="24" id="time-slider">
-    <span>24</span>
+    <label for="time-slider">Hours:</label>
+    <div>
+      <span>1</span>
+      <input type="range" min="1" max="24" value="24" id="time-slider">
+      <span>24</span>
+    </div>
+    <div>
+      <input type="checkbox" id="show-all-readings">
+      <label for="show-all-readings">Show all readings</label>
+    </div>
   </div>
   <div>
-    <input type="checkbox" id="show-all-readings">
-    <label for="show-all-readings">Show all readings</label>
+    <label for="reading-id">Enter Reading ID to Delete:</label>
+    <input type="text" id="reading-id" placeholder="Enter Reading ID">
+    <button onclick="deleteReading()">Delete</button>
+    <div id="delete-message"></div>
   </div>
-  <button id="download-data">Download Data (.txt)</button>
-  <button id="delete-data">Delete Data Log</button>
+  <div>
+    <button id="download-data">Download Data (.txt)</button>
+    <button id="delete-data">Delete Data Log</button>
+  </div>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput">
+    <button type="submit">Upload</button>
+  </form>
   <script src="/servercode.js"></script>  
 </body>
 </html>

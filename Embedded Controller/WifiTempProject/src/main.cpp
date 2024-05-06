@@ -27,12 +27,14 @@
 #include <WiFiUdp.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <WebSocketsServer.h>
 
 // Library for
 #include <SPIFFS.h>
 
 // Define port number for AsyncWebServer
 AsyncWebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Prototype functions
 void setTimezone(String timezone);
@@ -48,6 +50,9 @@ void getTimeStamp();
 void logSDCard();
 void deleteLog();
 bool initWiFi();
+void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length);
+void handleDeleteReading(AsyncWebServerRequest *request);
+void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 
 // Variables to access and fetch SSID and Password supplied by the user during initial run.
 //! Path to configuration file containing SSID
@@ -58,6 +63,9 @@ const char* passPath = "/pass.txt";
 const char* PARAM_INPUT_1 = "ssid";
 //! Variable used to check input is from the Password field
 const char* PARAM_INPUT_2 = "pass";
+//! Variable used to verify parameter is for deleting specific line in readings file (data.txt)
+const char* DEL_READING_INPUT = "readingID";
+
 String pass;
 String ssid;
 
@@ -96,6 +104,7 @@ String timeStamp;
 
 //! Define task handle:
 TaskHandle_t taskHandle = NULL;
+TaskHandle_t webSocketTaskHandle = NULL;
 
 /**
  * Task to call getReadings() periodically.
@@ -108,6 +117,16 @@ void getReadingsTask(void *pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(TASK_DELAY_MS));
   }
 }
+/**
+ * Task to run WebSocket:
+*/
+void webSocketTask(void *pvParameters) {
+  for (;;) {
+    webSocket.loop(); // Handle WebSocket events
+    vTaskDelay(pdMS_TO_TICKS(10)); // Adjust delay as needed
+  }
+}
+
 
 void setup() {
   /**
@@ -158,7 +177,10 @@ void setup() {
   
   //! Initaite task to run periodically:
   xTaskCreate(getReadingsTask, "getReadingsTask", TASK_STACK_SIZE, NULL, 1, &taskHandle);
+  xTaskCreate(webSocketTask, "WebSocketTask", TASK_STACK_SIZE, NULL, 1, &webSocketTaskHandle);
 
+  
+  
   //! Attempt to initialize WiFi, and if succesful, serve endpoints (/temperature, /history, /download). Used in index.html script.
   if(initWiFi()) {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -186,7 +208,13 @@ void setup() {
         request->send(200, "text/plain", "Log file deleted successfully");
       }
     });
-
+    server.on("/delete-reading", HTTP_POST, handleDeleteReading);
+    server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) {
+      // Handle file upload
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Uploading file...");
+      request->send(response);
+    }, handleFileUpload);
+  
     server.begin();
   }
   //! If unsuccesful, starts local open AP for the user to connect to and configure
@@ -241,12 +269,12 @@ void setup() {
 
   }
 
-
   //! Start the DallasTemperature library
   sensors.begin();
 
-  //! Get readings, timestamp, and log data to SD card.
-  // getReadings();
+  //! Set up websocket event handler.
+  webSocket.begin();
+  webSocket.onEvent(handleWebSocketEvent);
 }
 
 void loop() {
@@ -303,6 +331,8 @@ String getReadings(){
   readingID++;
   //! Log to SD Card
   logSDCard();
+  String message = String(readingID) + "," + dayStamp + " " + timeStamp + "," + String(temperature);
+  webSocket.broadcastTXT(message);
   return String(temperature);
 }
 
@@ -463,4 +493,128 @@ bool initWiFi() {
   //setenv()
   timeClient.setTimeOffset(7200);
   return true;
+}
+
+/**
+ * Handles websocket events for troubleshooting purposes
+*/
+void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
+  switch (type) {
+    case WStype_CONNECTED:
+      Serial.printf("[%u] WebSocket client connected\n", num);
+      break;
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] WebSocket client disconnected\n", num);
+      break;
+    case WStype_TEXT:
+      Serial.printf("[%u] Received text: %s\n", num, payload);
+      break;
+  }
+}
+
+/**
+ * Handles POST request to delete a  specific reading given a readingID
+*/
+void handleDeleteReading(AsyncWebServerRequest *request) {
+  // Get the reading ID from the request parameters
+  Serial.println("Deleting ID...");  
+  String readingIDStr;
+  
+  int params = request->params();
+ 
+  for (int i=0;i<params;i++) {
+    AsyncWebParameter* p = request->getParam(i);
+    if(p->isPost()){
+      // HTTP POST ssid value
+      if (p->name() == DEL_READING_INPUT) {
+        readingIDStr = p->value();
+      }
+    }
+  }
+
+  Serial.println("Open data file...");
+  // Open the data.txt file for reading and writing
+  File file = SD.open("/data.txt", FILE_READ);
+  if (!file) {
+    request->send(500, "text/plain", "Failed to open data.txt");
+    return;
+  }
+
+  Serial.println("OPEN TEMP FILE...");
+  // Create a temporary file to store the modified data
+  File tempFile = SD.open("/temp.txt", FILE_WRITE);
+  if (!tempFile) {
+    // If the temporary file creation fails, try creating it again
+    writeFile(SD, "/temp.txt", "");
+    tempFile = SD.open("/temp.txt", FILE_WRITE);
+    if (!tempFile) {
+      file.close();
+      request->send(500, "text/plain", "Failed to create temporary file");
+      return;
+    }
+  }
+
+  Serial.println("Writing data to temp file..");
+  // Read each line of the data file and write it to the temporary file
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    String lineReadingID = line.substring(0, line.indexOf(","));
+    if (lineReadingID != readingIDStr) {
+      tempFile.print(line);
+    }
+  }
+
+  // Close both files
+  file.close();
+  tempFile.close();
+
+  // Delete the original data file
+  SD.remove("/data.txt");
+
+  // Rename the temporary file to the original data file
+  if (!SD.rename("/temp.txt", "/data.txt")) {
+    request->send(500, "text/plain", "Failed to rename temporary file");
+    return;
+  }
+
+  // Send a success response
+  request->send(200, "text/plain", "Reading deleted successfully");
+}
+
+void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  static File file;
+
+  // If this is the first part of the file, open it for writing
+  if (!index) {
+    file = SD.open("/temp.txt", FILE_WRITE); // Use a temporary file
+    if (!file) {
+      request->send(500, "text/plain", "Failed to create or open file");
+      return;
+    }
+  }
+
+  // Write the received data to the file
+  if (file.write(data, len) != len) {
+    request->send(500, "text/plain", "Failed to write to file");
+    file.close();
+    return;
+  }
+
+  // If this is the final part of the file, close it and replace the existing data.txt file
+  if (final) {
+    file.close();
+
+    // Remove existing data.txt file
+    if (SD.exists("/data.txt")) {
+      SD.remove("/data.txt");
+    }
+
+    // Rename temp.txt to data.txt
+    if (!SD.rename("/temp.txt", "/data.txt")) {
+      request->send(500, "text/plain", "Failed to rename file");
+      return;
+    }
+
+    request->send(200, "text/plain", "File uploaded and replaced successfully");
+  }
 }
