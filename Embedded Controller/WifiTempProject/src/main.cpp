@@ -97,7 +97,9 @@ String timeStamp;
 //! Define task handle:
 TaskHandle_t taskHandle = NULL;
 
-// Define the task function
+/**
+ * Task to call getReadings() periodically.
+*/
 void getReadingsTask(void *pvParameters) {
   for (;;) {
     // Call getReadings()

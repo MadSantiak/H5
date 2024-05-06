@@ -185,10 +185,11 @@ function fetchLatestReadingAndInsertIntoGraph() {
   fetch('/temperature')
     .then(response => response.text())
     .then(data => {
+      console.log("Fetching latest data..")
       // Parse the CSV data
       const [readingID, date, hour, temperature] = data.split(',');
       // Convert date and hour to timestamp
-      const x = new Date(`${date} ${hour}`).getTime();
+      const x = new Date(`${date} ${hour}`).getTime() + 7200000;
       const y = parseFloat(temperature);
       
       // Check if the readingID is different from the last one
@@ -213,4 +214,4 @@ function fetchLatestReadingAndInsertIntoGraph() {
 
 // Call fetchLatestReadingAndInsertIntoGraph initially and then every minute
 fetchLatestReadingAndInsertIntoGraph();
-setInterval(fetchLatestReadingAndInsertIntoGraph, 60000);
+setInterval(fetchLatestReadingAndInsertIntoGraph, 6000);
