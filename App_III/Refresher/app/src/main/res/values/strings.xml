@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Refresher</string>
+    <string name="put_your_food_in_your_mouth_and_in_your_app">Put your food in your mouth AND in your app</string>
+    <string name="save_food">Register toilet location</string>
+</resources>
