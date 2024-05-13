@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GoWork</string>
+    <string name="title">Go Work</string>
+    <string name="work">Add workplace</string>
+</resources>
