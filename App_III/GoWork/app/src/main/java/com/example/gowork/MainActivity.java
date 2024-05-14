@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -31,10 +32,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.gowork.Controllers.ConfigHelper;
 import com.example.gowork.Controllers.WeatherApiService;
+import com.example.gowork.Controllers.WorkperiodController;
 import com.example.gowork.Controllers.WorkplaceController;
 import com.example.gowork.Model.WeatherResponse.WeatherResponse;
-import com.example.gowork.Model.WorkPeriod.WorkPeriod;
-import com.example.gowork.Model.WorkPeriod.WorkPeriodAdapter;
+import com.example.gowork.Model.Workperiod.Workperiod;
+import com.example.gowork.Model.Workperiod.WorkperiodAdapter;
 import com.example.gowork.Model.Workplace.AddWorkplaceActivity;
 import com.example.gowork.Model.Workplace.Workplace;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -52,10 +54,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import com.leinardi.android.speeddial.SpeedDialActionItem;
 import com.leinardi.android.speeddial.SpeedDialView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity implements SpeedDialView.OnActionSelectedListener {
 
@@ -77,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
     //endregion
 
     //region Fields
-    WorkPeriodAdapter workPeriodAdapter;
-    List<WorkPeriod> periods = new ArrayList<>();
+    WorkperiodAdapter workPeriodAdapter;
+    List<Workperiod> periods = new ArrayList<>();
     //! Assign standard value
     Workplace workplace = new Workplace(1, "Default", 8.69491F, 56.95523F);
     private double latitude;
@@ -113,6 +112,26 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
         Workplace tempWorkplace = WorkplaceController.getWorkplaceById(1);
         workplace = (tempWorkplace != null) ? tempWorkplace : workplace;
         WorkplaceController.addWorkplace(workplace);
+
+        periods.addAll(WorkperiodController.getAllWorkperiod());
+        workPeriodAdapter = new WorkperiodAdapter(this, periods);
+        workPeriodAdapter.setOnStopClickListener(new WorkperiodAdapter.OnStopClickListener() {
+            @Override
+            public void onStopClick(int position) {
+                Workperiod workPeriod = periods.get(position);
+                workPeriod.setStopTime(new Date());
+                workPeriodAdapter.notifyDataSetChanged();
+            }
+        });
+        workPeriodAdapter.setOnDeleteClickListener(new WorkperiodAdapter.OnDeleteClickListener() {
+            @Override
+            public void onDeleteClick(int position) {
+                Workperiod workPeriod = periods.get(position);
+                WorkperiodController.delWorkperiod(workPeriod.getId());
+                periods.remove(workPeriod);
+                workPeriodAdapter.notifyDataSetChanged();
+            }
+        });
 
         //! Initialize permissions list for checking.
         askForPermissions(permissionsList);
@@ -151,11 +170,23 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
      */
     private void initGui() {
         btnWork = findViewById(R.id.btnWork);
+        btnWork.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Date startTime = new Date();
+                Workperiod workPeriod = new Workperiod(latitude, longitude, startTime);
+                WorkperiodController.addWorkperiod(workPeriod);
+                periods.add(workPeriod);
+                workPeriodAdapter.notifyDataSetChanged();
+            }
+        });
+
         txtWorkplaceName = findViewById(R.id.txtWorkplaceName);
         txtWorkplaceName.setText(workplace.getName());
         txtDistanceToWork = findViewById(R.id.txtDistanceToWork);
         txtCurrentTemperature = findViewById(R.id.txtCurrentTemperature);
         listWorkPeriods = findViewById(R.id.listWorkPeriods);
+        listWorkPeriods.setAdapter(workPeriodAdapter);
         spdMenu = findViewById(R.id.spdMenu);
         spdMenu.addActionItem(new SpeedDialActionItem.Builder(R.id.itemAddWorkplace, R.drawable.account_plus)
                 .create());

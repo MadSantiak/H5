@@ -1,12 +1,24 @@
-package com.example.gowork.Model.WorkPeriod;
+package com.example.gowork.Model.Workperiod;
 
 import java.util.Date;
 
-public class WorkPeriod {
+public class Workperiod {
+    private int id;
     private double latitude;
     private double longitude;
+    private Date startTime;
+    private Date stopTime;
+    private boolean atWorkplace;
 
-    public WorkPeriod(double latitude, double longitude, Date startTime) {
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Workperiod(double latitude, double longitude, Date startTime) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.startTime = startTime;
@@ -52,16 +64,4 @@ public class WorkPeriod {
         this.atWorkplace = atWorkplace;
     }
 
-    public float getDistance() {
-        return distance;
-    }
-
-    public void setDistance(float distance) {
-        this.distance = distance;
-    }
-
-    private Date startTime;
-    private Date stopTime;
-    private boolean atWorkplace;
-    private float distance;
 }
