@@ -4,6 +4,7 @@ import com.example.gowork.model.Workperiod;
 import com.example.gowork.repository.WorkperiodRepository;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -27,8 +28,9 @@ public class WorkperiodController {
     }
 
     @PostMapping()
-    void create(@RequestBody Workperiod workperiod) {
+    int create(@RequestBody Workperiod workperiod) {
         repo.save(workperiod);
+        return workperiod.getId();
     }
 
     @PutMapping()

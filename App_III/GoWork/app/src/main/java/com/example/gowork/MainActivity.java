@@ -54,6 +54,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import com.leinardi.android.speeddial.SpeedDialActionItem;
 import com.leinardi.android.speeddial.SpeedDialView;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class MainActivity extends AppCompatActivity implements SpeedDialView.OnActionSelectedListener {
@@ -98,6 +99,10 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
     ActivityResultLauncher<Intent> addWorkplaceActivityLauncher;
     //endregion
 
+    //region Static Helpers
+    public static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    //endregion
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -119,7 +124,10 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
             @Override
             public void onStopClick(int position) {
                 Workperiod workPeriod = periods.get(position);
-                workPeriod.setStopTime(new Date());
+                Date stopDate = new Date();
+                String stopTime = sdf.format(stopDate);
+                workPeriod.setStopTime(stopTime);
+                WorkperiodController.updateWorkperiod(workPeriod);
                 workPeriodAdapter.notifyDataSetChanged();
             }
         });
@@ -174,9 +182,13 @@ public class MainActivity extends AppCompatActivity implements SpeedDialView.OnA
             @Override
             public void onClick(View v) {
                 Date startTime = new Date();
-                Workperiod workPeriod = new Workperiod(latitude, longitude, startTime);
+                String formattedStartTime = sdf.format(startTime);
+                Workperiod workPeriod = new Workperiod(latitude, longitude, formattedStartTime);
                 WorkperiodController.addWorkperiod(workPeriod);
-                periods.add(workPeriod);
+
+                //periods.add(workPeriod);
+                periods.clear();
+                periods.addAll(WorkperiodController.getAllWorkperiod());
                 workPeriodAdapter.notifyDataSetChanged();
             }
         });

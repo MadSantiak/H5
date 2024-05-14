@@ -5,67 +5,113 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start Longitude: "
-            android:textStyle="bold"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ID: "
+                android:textStyle="bold"/>
 
-        <!-- TextView for Toilet Longitude -->
-        <TextView
-            android:id="@+id/txt_period_longitude"
-            android:layout_width="wrap_content"
+            <!-- TextView for Toilet Longitude -->
+            <TextView
+                android:id="@+id/txt_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            />
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start Longitude: "
+                android:textStyle="bold"/>
 
-        <TextView
-            android:layout_width="wrap_content"
+            <!-- TextView for Toilet Longitude -->
+            <TextView
+                android:id="@+id/txt_period_longitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start Latitude: "
-            android:textStyle="bold"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start Latitude: "
+                android:textStyle="bold"/>
 
-        <!-- TextView for Toilet Latitude -->
-        <TextView
-            android:id="@+id/txt_period_latitude"
-            android:layout_width="wrap_content"
+            <!-- TextView for Toilet Latitude -->
+            <TextView
+                android:id="@+id/txt_period_latitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start: "
-            android:textStyle="bold"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start: "
+                android:textStyle="bold"/>
 
-        <!-- TextView for Toilet Longitude -->
-        <TextView
-            android:id="@+id/txt_period_start"
-            android:layout_width="wrap_content"
+            <!-- TextView for Toilet Longitude -->
+            <TextView
+                android:id="@+id/txt_period_start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            />
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stop: "
+                android:textStyle="bold"/>
 
-        <TextView
-            android:layout_width="wrap_content"
+            <!-- TextView for Toilet Latitude -->
+            <TextView
+                android:id="@+id/txt_period_stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stop: "
-            android:textStyle="bold"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Elapsed: "
+                android:textStyle="bold"/>
 
-        <!-- TextView for Toilet Latitude -->
-        <TextView
-            android:id="@+id/txt_period_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            />
+            <!-- TextView for Toilet Latitude -->
+            <TextView
+                android:id="@+id/txt_elapsed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+
+        </LinearLayout>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"

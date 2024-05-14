@@ -45,25 +45,25 @@ public class WorkperiodController {
         FutureTask<List<Workperiod>> futureTask = new FutureTask<>(new Callable<List<Workperiod>>() {
             @Override
             public List<Workperiod> call() throws Exception {
-                List<Workperiod> people = null;
+                List<Workperiod> workperiod = null;
                 IWorkperiodService serv = ServiceBuilder.buildService(IWorkperiodService.class);
                 Call<List<Workperiod>> request = serv.getAllWorkperiod();
                 try {
-                    people = request.execute().body();
+                    workperiod = request.execute().body();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return people;
+                return workperiod;
             }
         });
         Thread t = new Thread(futureTask);
         t.start();
-        List<Workperiod> people = null;
+        List<Workperiod> workperiod = null;
         try {
-            people = futureTask.get();
+            workperiod = futureTask.get();
         } catch (Exception e) {
         }
-        return people;
+        return workperiod;
     }
 
     public static Integer addWorkperiod(Workperiod Workperiod)
@@ -75,8 +75,10 @@ public class WorkperiodController {
                 IWorkperiodService serv = ServiceBuilder.buildService(IWorkperiodService.class);
 
                 Call<Integer> req = serv.addWorkperiod(Workperiod);
+                Log.d("Test", req.toString());
                 try {
                     i = req.execute().body();
+                    Log.d("Test2", i.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -93,6 +95,7 @@ public class WorkperiodController {
         }
         return pId;
     }
+
     public static void updateWorkperiod(Workperiod workperiod)
     {
         FutureTask<Void> futureTask = new FutureTask<>(new Callable<Void>() {

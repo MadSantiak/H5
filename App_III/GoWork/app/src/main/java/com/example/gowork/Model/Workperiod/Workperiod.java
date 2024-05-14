@@ -6,8 +6,8 @@ public class Workperiod {
     private int id;
     private double latitude;
     private double longitude;
-    private Date startTime;
-    private Date stopTime;
+    private String startTime;
+    private String stopTime;
     private boolean atWorkplace;
 
     public int getId() {
@@ -18,7 +18,7 @@ public class Workperiod {
         this.id = id;
     }
 
-    public Workperiod(double latitude, double longitude, Date startTime) {
+    public Workperiod(double latitude, double longitude, String startTime) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.startTime = startTime;
@@ -40,19 +40,19 @@ public class Workperiod {
         this.longitude = longitude;
     }
 
-    public Date getStartTime() {
+    public String getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(Date startTime) {
+    public void setStartTime(String startTime) {
         this.startTime = startTime;
     }
 
-    public Date getStopTime() {
+    public String getStopTime() {
         return stopTime;
     }
 
-    public void setStopTime(Date stopTime) {
+    public void setStopTime(String stopTime) {
         this.stopTime = stopTime;
     }
 

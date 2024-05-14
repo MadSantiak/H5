@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.gowork.Controllers.TimeElapsedUpdater;
 import com.example.gowork.R;
 
 import java.text.SimpleDateFormat;
@@ -19,8 +20,9 @@ import java.util.List;
 public class WorkperiodAdapter extends ArrayAdapter<Workperiod> {
     private Context context;
     private List<Workperiod> workPeriods;
+    TimeElapsedUpdater timeElapsedUpdater;
 
-    TextView txtPeriodLongitude, txtPeriodLatitude, txtStartTime, txtStopTime;
+    TextView txtPeriodLongitude, txtPeriodLatitude, txtStartTime, txtStopTime, txtElapsed, txtId;
     Button btnStop, btnDelete;
 
     public WorkperiodAdapter(Context context, List<Workperiod> workPeriods) {
@@ -61,22 +63,23 @@ public class WorkperiodAdapter extends ArrayAdapter<Workperiod> {
         txtStopTime = rowView.findViewById(R.id.txt_period_stop);
         btnStop = rowView.findViewById(R.id.btnStop);
         btnDelete = rowView.findViewById(R.id.btnDelete);
+        txtId = rowView.findViewById(R.id.txt_id);
+        txtElapsed = rowView.findViewById(R.id.txt_elapsed);
 
         // Set data to the UI elements
         Workperiod workPeriod = workPeriods.get(position);
+
         txtPeriodLongitude.setText(String.valueOf(workPeriod.getLongitude()));
         txtPeriodLatitude.setText(String.valueOf(workPeriod.getLatitude()));
+        txtId.setText(String.valueOf(workPeriod.getId()));
+        txtStartTime.setText(workPeriod.getStartTime());
+        txtStopTime.setText(workPeriod.getStopTime());
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss"); // Example pattern
 
-        if (workPeriod.getStartTime() != null) {
-            String formattedStartDate = sdf.format(workPeriod.getStartTime());
-            txtStartTime.setText(formattedStartDate);
-        }
-        if (workPeriod.getStopTime() != null) {
-            String formattedStopDate = sdf.format(workPeriod.getStopTime());
-            txtStopTime.setText(formattedStopDate);
-        }
+        startElapsedTimeUpdaterThread(workPeriod, txtElapsed);
+
+
+
         // Set OnClickListener for the delete button, so it calls the OnDeleteListener
         btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,6 +88,7 @@ public class WorkperiodAdapter extends ArrayAdapter<Workperiod> {
                 if (onStopClickListener != null) {
                     onStopClickListener.onStopClick(position);
                 }
+                timeElapsedUpdater.requestStop();
             }
         });
         btnDelete.setOnClickListener(new View.OnClickListener() {
@@ -94,9 +98,16 @@ public class WorkperiodAdapter extends ArrayAdapter<Workperiod> {
                 if (onDeleteClickListener != null) {
                     onDeleteClickListener.onDeleteClick(position);
                 }
+                timeElapsedUpdater.requestStop();
             }
         });
 
         return rowView;
+    }
+
+    private void startElapsedTimeUpdaterThread(Workperiod workPeriod, TextView elapsedTimeTextView) {
+        timeElapsedUpdater = new TimeElapsedUpdater(workPeriod, elapsedTimeTextView);
+        Thread thread = new Thread(timeElapsedUpdater);
+        thread.start();
     }
 }
