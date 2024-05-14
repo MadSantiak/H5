@@ -1,7 +1,9 @@
 package com.example.gowork;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -14,6 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -28,9 +31,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.gowork.Controllers.ConfigHelper;
 import com.example.gowork.Controllers.WeatherApiService;
+import com.example.gowork.Controllers.WorkplaceController;
 import com.example.gowork.Model.WeatherResponse.WeatherResponse;
 import com.example.gowork.Model.WorkPeriod.WorkPeriod;
 import com.example.gowork.Model.WorkPeriod.WorkPeriodAdapter;
+import com.example.gowork.Model.Workplace.AddWorkplaceActivity;
 import com.example.gowork.Model.Workplace.Workplace;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -44,36 +49,40 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import com.leinardi.android.speeddial.SpeedDialActionItem;
+import com.leinardi.android.speeddial.SpeedDialView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SpeedDialView.OnActionSelectedListener {
 
     //region Permission variables
     AlertDialog alertDialog;
-
     String[] permissionsStr = {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
     };
-
     ArrayList<String> permissionsList = new ArrayList<>(Arrays.asList(permissionsStr));
     //endregion
 
     //region View variables
     Button btnWork;
-    TextView txtDistanceToWork, txtCurrentTemperature;
+    TextView txtDistanceToWork, txtCurrentTemperature, txtWorkplaceName;
     ListView listWorkPeriods;
     FloatingActionButton fabAddPeriod;
+    SpeedDialView spdMenu;
     //endregion
 
     //region Fields
     WorkPeriodAdapter workPeriodAdapter;
     List<WorkPeriod> periods = new ArrayList<>();
-    Workplace workplace = new Workplace("Default", 8.69491F, 56.95523F);
+    //! Assign standard value
+    Workplace workplace = new Workplace(1, "Default", 8.69491F, 56.95523F);
+    private double latitude;
+    private double longitude;
     //endregion
 
     //region GPS variables
@@ -84,6 +93,10 @@ public class MainActivity extends AppCompatActivity {
     //region Weather threads
     private HandlerThread weatherThread;
     private Handler weatherHandler;
+    //endregion
+
+    //region ActivityLaunchers
+    ActivityResultLauncher<Intent> addWorkplaceActivityLauncher;
     //endregion
 
     @Override
@@ -97,6 +110,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        Workplace tempWorkplace = WorkplaceController.getWorkplaceById(1);
+        workplace = (tempWorkplace != null) ? tempWorkplace : workplace;
+        WorkplaceController.addWorkplace(workplace);
+
         //! Initialize permissions list for checking.
         askForPermissions(permissionsList);
 
@@ -108,6 +125,25 @@ public class MainActivity extends AppCompatActivity {
         weatherThread.start();
         weatherHandler = new Handler(weatherThread.getLooper());
         weatherHandler.postDelayed(weatherUpdateRunnable, 6000);
+
+        /**
+         * Activity launchers so we can fetch/respond to data changes
+         */
+        addWorkplaceActivityLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult o) {
+                        if (o.getResultCode() == Activity.RESULT_OK)
+                        {
+                            Intent res = o.getData();
+                            workplace = (Workplace) res.getSerializableExtra("newWP");
+
+                            txtWorkplaceName.setText(workplace.getName());
+                        }
+                    }
+                }
+        );
     }
 
     /**
@@ -115,9 +151,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initGui() {
         btnWork = findViewById(R.id.btnWork);
+        txtWorkplaceName = findViewById(R.id.txtWorkplaceName);
+        txtWorkplaceName.setText(workplace.getName());
         txtDistanceToWork = findViewById(R.id.txtDistanceToWork);
         txtCurrentTemperature = findViewById(R.id.txtCurrentTemperature);
         listWorkPeriods = findViewById(R.id.listWorkPeriods);
+        spdMenu = findViewById(R.id.spdMenu);
+        spdMenu.addActionItem(new SpeedDialActionItem.Builder(R.id.itemAddWorkplace, R.drawable.account_plus)
+                .create());
+        spdMenu.setOnActionSelectedListener(this);
     }
 
     /**
@@ -166,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        txtCurrentTemperature.setText("Temperature: " + temperature + "°C");
+                                        txtCurrentTemperature.setText(temperature + "°C");
                                     }
                                 });
                             } else {
@@ -279,10 +321,13 @@ public class MainActivity extends AppCompatActivity {
                 if (workplace != null && location != null) {
                     Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                             workplace.getLatitude(), workplace.getLongitude(), results);
+
+                    longitude = location.getLongitude();
+                    latitude = location.getLatitude();
                 }
                 double distance = results[0];
                 String formattedDistance = String.format("%.2f", distance/1000);
-                txtDistanceToWork.setText("Distance to work:" + formattedDistance + "km");
+                txtDistanceToWork.setText(formattedDistance + "km");
             }
         }, Looper.myLooper());
     }
@@ -301,5 +346,15 @@ public class MainActivity extends AppCompatActivity {
             weatherThread = null;
             weatherHandler = null;
         }
+    }
+
+    @Override
+    public boolean onActionSelected(SpeedDialActionItem speedDialActionItem) {
+        if (speedDialActionItem.getId() == R.id.itemAddWorkplace) {
+            Intent intent = new Intent(MainActivity.this, AddWorkplaceActivity.class);
+            intent.putExtra("currentWP", workplace);
+            addWorkplaceActivityLauncher.launch(intent);
+        }
+        return true;
     }
 }

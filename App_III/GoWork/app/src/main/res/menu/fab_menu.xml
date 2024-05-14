@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+            android:title="Add Workplace"
+            android:id="@+id/itemAddWorkplace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="35dp"
+            android:src="@drawable/account_plus"
+            android:backgroundTint="@color/design_default_color_primary"
+            android:elevation="5dp"
+    />
+
+</menu>

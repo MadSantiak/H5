@@ -1,19 +1,24 @@
 package com.example.gowork.Model.Workplace;
 
-public class Workplace {
-    private static Workplace instance;
-    private String name;
-    private float longitude;
-    private float latitude;
+import java.io.Serializable;
 
-    public Workplace(String name, float longitude, float latitude) {
+public class Workplace implements Serializable {
+    private int id;
+    private String name;
+    private double longitude;
+    private double latitude;
+
+    public Workplace(int id, String name, double longitude, double latitude) {
+        this.id = id;
         this.name = name;
         this.longitude = longitude;
         this.latitude = latitude;
     }
 
-    public static void setInstance(Workplace instance) {
-        Workplace.instance = instance;
+    public Workplace(String name, double longitude, double latitude) {
+        this.name = name;
+        this.longitude = longitude;
+        this.latitude = latitude;
     }
 
     public String getName() {
@@ -24,19 +29,19 @@ public class Workplace {
         this.name = name;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(float longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(float latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
