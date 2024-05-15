@@ -5,10 +5,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ServiceBuilder {
     // From School:
-    //private static final String URL = "http://192.168.0.157:8080/";
+    private static final String URL = "http://192.168.0.157:8080/";
 
     // From home:
-    private static final String URL = "http://192.168.1.145:8080/";
+    //private static final String URL = "http://192.168.1.145:8080/";
 
     private static Retrofit retrofit =
             new Retrofit.Builder().baseUrl(URL)

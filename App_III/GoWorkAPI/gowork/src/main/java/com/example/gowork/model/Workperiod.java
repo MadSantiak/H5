@@ -26,6 +26,4 @@ public class Workperiod {
     double latitude;
     double longitude;
     boolean atWorkplace;
-
-    int test;
 }
